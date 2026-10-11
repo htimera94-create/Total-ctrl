@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AntiGaspi Restaurant</title>
+<style>
+:root {
+  font-family: Arial, sans-serif;
+  color: #20352b;
+  background: #f4f7f4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+header {
+  background: #174d38;
+  color: white;
+  padding: 24px 18px;
+}
+header h1 { margin: 0 0 7px; font-size: 25px; }
+header p { margin: 0; color: #d7e9dd; }
+main { max-width: 850px; margin: auto; padding: 18px; }
+h2 { font-size: 19px; margin-top: 24px; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.card, .panel {
+  background: white;
+  border: 1px solid #e1e9e2;
+  border-radius: 14px;
+  padding: 16px;
+}
+.card span { font-size: 12px; color: #617268; }
+.card strong { display: block; margin-top: 9px; font-size: 22px; }
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 15px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.primary { background: #176c49; color: white; }
+.secondary { background: #eaf3ec; color: #174d38; }
+label { display: block; font-size: 14px; margin: 14px 0 6px; }
+input, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd8cf;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+}
+.actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.preview { margin-top: 14px; background: #eef6ef; padding: 14px; border-radius: 9px; }
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid #e7ece8;
+}
+.row:last-child { border-bottom: 0; }
+.muted { color: #68776e; font-size: 13px; }
+.hidden { display: none; }
+footer { text-align: center; padding: 24px; color: #68776e; font-size: 12px; }
+@media(max-width: 520px) {
+  .cards { grid-template-columns: 1fr; }
+  .card strong { font-size: 25px; }
+  main { padding: 12px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌿 AntiGaspi Restaurant</h1>
+  <p>Le gaspillage alimentaire, mesuré en euros.</p>
+</header>
+
+<main>
+  <p class="muted">Restaurant de démonstration : Le Petit Bistrot</p>
+
+  <div class="cards">
+    <div class="card">
+      <span>Pertes du jour</span>
+      <strong id="today">0,00 €</strong>
+    </div>
+    <div class="card">
+      <span>Pertes cette semaine</span>
+      <strong id="week">0,00 €</strong>
+    </div>
+    <div class="card">
+      <span>Pertes ce mois</span>
+      <strong id="month">0,00 €</strong>
+    </div>
+  </div>
+
+  <h2>Déclarer une perte</h2>
+  <section class="panel">
+    <form id="wasteForm">
+      <label for="product">Produit</label>
+      <select id="product" required>
+        <option value="Poulet">Poulet — 9 €/kg</option>
+        <option value="Tomates">Tomates — 2,50 €/kg</option>
+        <option value="Salade">Salade — 4 €/kg</option>
+        <option value="Pain">Pain — 0,60 €/pièce</option>
+        <option value="Frites">Frites — 2 €/kg</option>
+      </select>
+
+      <label for="quantity">Quantité gaspillée</label>
+      <input id="quantity" type="number" min="0.01" step="0.01"
+             placeholder="Ex. : 2.5" required>
+
+      <label for="reason">Motif de la perte</label>
+      <select id="reason">
+        <option>Produit périmé</option>
+        <option>Préparation excessive</option>
+        <option>Restes d'assiette</option>
+        <option>Produit abîmé</option>
+        <option>Erreur de préparation</option>
+      </select>
+
+      <div class="preview">
+        Coût estimé de cette perte :
+        <strong id="preview">0,00 €</strong>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit">Enregistrer la perte</button>
+      </div>
+    </form>
+  </section>
+
+  <h2>Historique des pertes</h2>
+  <section class="panel">
+    <div id="history"></div>
+    <div class="actions">
+      <button class="secondary" id="demo" type="button">Ajouter des données de démonstration</button>
+      <button class="secondary" id="reset" type="button">Réinitialiser les données</button>
+    </div>
+  </section>
+</main>
+
+<footer>Prototype de démonstration — données conservées dans ce navigateur.</footer>
+
+<script>
+const prices = {
+  Poulet: 9,
+  Tomates: 2.5,
+  Salade: 4,
+  Pain: 0.6,
+  Frites: 2
+};
+
+const units = {
+  Poulet: "kg",
+  Tomates: "kg",
+  Salade: "kg",
+  Pain: "pièce(s)",
+  Frites: "kg"
+};
+
+const euro = n => n.toLocaleString("fr-FR", {
+  style: "currency", currency: "EUR"
+});
+
+let losses = [];
+
+try {
+  losses = JSON.parse(localStorage.getItem("antigaspi_losses") || "[]");
+  if (!Array.isArray(losses)) losses = [];
+} catch {
+  losses = [];
+}
+
+const product = document.getElementById("product");
+const quantity = document.getElementById("quantity");
+const preview = document.getElementById("preview");
+
+function save() {
+  localStorage.setItem("antigaspi_losses", JSON.stringify(losses));
+}
+
+function calculatePreview() {
+  const q = Number(quantity.value) || 0;
+  preview.textContent = euro(q * prices[product.value]);
+}
+
+function render() {
+  const now = new Date();
+  const startWeek = new Date(now);
+  const weekday = (now.getDay() + 6) % 7;
+  startWeek.setDate(now.getDate() - weekday);
+  startWeek.setHours(0, 0, 0, 0);
+
+  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  let today = 0, week = 0, month = 0;
+
+  for (const loss of losses) {
+    const date = new Date(loss.date);
+    if (date.toDateString() === now.toDateString()) today += loss.cost;
+    if (date >= startWeek) week += loss.cost;
+    if (date >= startMonth) month += loss.cost;
+  }
+
+  document.getElementById("today").textContent = euro(today);
+  document.getElementById("week").textContent = euro(week);
+  document.getElementById("month").textContent = euro(month);
+
+  const history = document.getElementById("history");
+  history.replaceChildren();
+
+  if (losses.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "Aucune perte enregistrée pour le moment.";
+    history.appendChild(empty);
+    return;
+  }
+
+  [...losses].reverse().forEach(loss => {
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const info = document.createElement("div");
+    const name = document.createElement("strong");
+    name.textContent = loss.product;
+    const detail = document.createElement("div");
+    detail.className = "muted";
+    detail.textContent =
+      `${loss.quantity} ${units[loss.product]} · ${loss.reason} · ` +
+      new Date(loss.date).toLocaleDateString("fr-FR");
+    info.append(name, detail);
+
+    const cost = document.createElement("strong");
+    cost.textContent = euro(loss.cost);
+
+    row.append(info, cost);
+    history.appendChild(row);
+  });
+}
+
+product.addEventListener("change", calculatePreview);
+quantity.addEventListener("input", calculatePreview);
+
+document.getElementById("wasteForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const q = Number(quantity.value);
+  if (!Number.isFinite(q) || q <= 0) return;
+
+  losses.push({
+    product: product.value,
+    quantity: q,
+    reason: document.getElementById("reason").value,
+    cost: Math.round(q * prices[product.value] * 100) / 100,
+    date: new Date().toISOString()
+  });
+
+  save();
+  render();
+  quantity.value = "";
+  calculatePreview();
+});
+
+document.getElementById("demo").addEventListener("click", () => {
+  const now = new Date();
+  losses.push(
+    {product:"Poulet", quantity:2, reason:"Préparation excessive",
+     cost:18, date:now.toISOString()},
+    {product:"Tomates", quantity:3, reason:"Produit abîmé",
+     cost:7.5, date:now.toISOString()},
+    {product:"Pain", quantity:10, reason:"Restes d'assiette",
+     cost:6, date:now.toISOString()}
+  );
+  save();
+  render();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (!confirm("Effacer toutes les pertes de ce navigateur ?")) return;
+  losses = [];
+  save();
+  render();
+});
+
+calculatePreview();
+render();
+</script>
+</body>
+</html>
