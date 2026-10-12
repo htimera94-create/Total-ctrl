@@ -1,293 +1,509 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AntiGaspi Restaurant</title>
 <style>
-:root {
-  font-family: Arial, sans-serif;
-  color: #20352b;
-  background: #f4f7f4;
-}
-* { box-sizing: border-box; }
-body { margin: 0; }
-header {
-  background: #174d38;
-  color: white;
-  padding: 24px 18px;
-}
-header h1 { margin: 0 0 7px; font-size: 25px; }
-header p { margin: 0; color: #d7e9dd; }
-main { max-width: 850px; margin: auto; padding: 18px; }
-h2 { font-size: 19px; margin-top: 24px; }
-.cards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-.card, .panel {
-  background: white;
-  border: 1px solid #e1e9e2;
-  border-radius: 14px;
-  padding: 16px;
-}
-.card span { font-size: 12px; color: #617268; }
-.card strong { display: block; margin-top: 9px; font-size: 22px; }
-button {
-  border: 0;
-  border-radius: 9px;
-  padding: 12px 15px;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-}
-.primary { background: #176c49; color: white; }
-.secondary { background: #eaf3ec; color: #174d38; }
-label { display: block; font-size: 14px; margin: 14px 0 6px; }
-input, select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccd8cf;
-  border-radius: 8px;
-  font-size: 16px;
-  background: white;
-}
-.actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
-.preview { margin-top: 14px; background: #eef6ef; padding: 14px; border-radius: 9px; }
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 0;
-  border-bottom: 1px solid #e7ece8;
-}
-.row:last-child { border-bottom: 0; }
-.muted { color: #68776e; font-size: 13px; }
-.hidden { display: none; }
-footer { text-align: center; padding: 24px; color: #68776e; font-size: 12px; }
-@media(max-width: 520px) {
-  .cards { grid-template-columns: 1fr; }
-  .card strong { font-size: 25px; }
-  main { padding: 12px; }
+:root{--g:#18794e;--ink:#18332a;--mut:#64756d;--line:#dce7e0;--bg:#f5f8f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Arial,sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line);padding:18px max(16px,calc((100% - 1050px)/2));font-weight:800;font-size:1.25rem}
+header span{color:var(--g)}
+main{max-width:1050px;margin:24px auto;padding:0 16px 40px}
+h1{margin:0;font-size:2rem}
+h2{font-size:1.15rem;margin:0 0 10px}
+p,.muted{color:var(--mut);font-size:.92rem}
+.notice{background:#fff3dc;border:1px solid #eed9a7;border-radius:10px;padding:12px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.card,.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;margin-bottom:15px;min-width:0}
+.metric{font-size:1.7rem;font-weight:800}
+.muted{margin:3px 0}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.field{display:flex;flex-direction:column;gap:5px;margin:0 0 12px}
+label{font-weight:650;font-size:.92rem}
+input,select{width:100%;padding:10px;border:1px solid #cbd9d0;border-radius:8px;font:inherit;background:white;color:var(--ink);min-height:43px}
+input[type=checkbox]{width:20px;min-height:20px}
+button{border:0;border-radius:9px;background:var(--g);color:white;font-weight:700;font:inherit;padding:10px 14px;cursor:pointer}
+button.danger{background:#fff0f0;color:#9c2828;border:1px solid #f0caca}
+button.secondary{background:#edf4ef;color:var(--ink)}
+.inline{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.status{background:#e9f7ef;border-radius:9px;padding:10px;margin:10px 0;font-size:.9rem}
+.warn{background:#fff3dc}
+.hidden{display:none!important}
+.preview{border:1px dashed #b7c9bd;padding:10px;border-radius:9px;margin:8px 0 12px;overflow:hidden}
+.preview img{max-width:100%;max-height:300px;display:block;margin:8px auto}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.82rem;color:var(--mut)}
+.empty{color:var(--mut);padding:10px 0}
+.small{font-size:.82rem;color:var(--mut)}
+.foot{font-size:.82rem;color:var(--mut);margin-top:14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:720px){
+.grid,.columns{grid-template-columns:1fr}
+.metric{font-size:1.5rem}
+header{padding:16px}
+.inline{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
 <body>
-<header>
-  <h1>🌿 AntiGaspi Restaurant</h1>
-  <p>Le gaspillage alimentaire, mesuré en euros.</p>
-</header>
-
+<header>♻️ AntiGaspi <span>Restaurant</span></header>
 <main>
-  <p class="muted">Restaurant de démonstration : Le Petit Bistrot</p>
+<div class="notice"><b>Démo :</b> aucun prix n’est prérempli. Importez une facture, lisez-la, saisissez les données et confirmez-les. Cette version ne reconnaît pas encore automatiquement le texte des factures.</div>
 
-  <div class="cards">
-    <div class="card">
-      <span>Pertes du jour</span>
-      <strong id="today">0,00 €</strong>
-    </div>
-    <div class="card">
-      <span>Pertes cette semaine</span>
-      <strong id="week">0,00 €</strong>
-    </div>
-    <div class="card">
-      <span>Pertes ce mois</span>
-      <strong id="month">0,00 €</strong>
-    </div>
-  </div>
+<h1>Tableau de bord</h1>
+<p>Les calculs utilisent uniquement les prix validés à partir des factures du gérant.</p>
 
-  <h2>Déclarer une perte</h2>
-  <section class="panel">
-    <form id="wasteForm">
-      <label for="product">Produit</label>
-      <select id="product" required>
-        <option value="Poulet">Poulet — 9 €/kg</option>
-        <option value="Tomates">Tomates — 2,50 €/kg</option>
-        <option value="Salade">Salade — 4 €/kg</option>
-        <option value="Pain">Pain — 0,60 €/pièce</option>
-        <option value="Frites">Frites — 2 €/kg</option>
-      </select>
+<div class="grid">
+<div class="card">
+<div class="muted">Pertes aujourd’hui</div>
+<div class="metric" id="today">0,00 €</div>
+<div class="muted" id="todayCount">0 perte</div>
+</div>
+<div class="card">
+<div class="muted">Pertes cette semaine</div>
+<div class="metric" id="week">0,00 €</div>
+</div>
+<div class="card">
+<div class="muted">Pertes ce mois-ci</div>
+<div class="metric" id="month">0,00 €</div>
+</div>
+</div>
 
-      <label for="quantity">Quantité gaspillée</label>
-      <input id="quantity" type="number" min="0.01" step="0.01"
-             placeholder="Ex. : 2.5" required>
+<div class="columns">
+<section class="panel">
+<h2>1. Ajouter une facture fournisseur</h2>
+<p>Formats acceptés : photo (JPG, PNG, WEBP) et PDF. Vérifiez les montants sur la facture : ils ne sont pas lus automatiquement dans cette version.</p>
 
-      <label for="reason">Motif de la perte</label>
-      <select id="reason">
-        <option>Produit périmé</option>
-        <option>Préparation excessive</option>
-        <option>Restes d'assiette</option>
-        <option>Produit abîmé</option>
-        <option>Erreur de préparation</option>
-      </select>
+<form id="invoiceForm">
+<div class="field">
+<label for="file">Photo ou PDF de la facture</label>
+<input id="file" type="file" accept="image/*,application/pdf" required>
+</div>
+<div id="preview" class="preview hidden"></div>
 
-      <div class="preview">
-        Coût estimé de cette perte :
-        <strong id="preview">0,00 €</strong>
-      </div>
+<div class="field">
+<label for="supplier">Fournisseur (facultatif)</label>
+<input id="supplier" maxlength="100" placeholder="Nom du fournisseur">
+</div>
 
-      <div class="actions">
-        <button class="primary" type="submit">Enregistrer la perte</button>
-      </div>
-    </form>
-  </section>
+<div class="inline">
+<div class="field">
+<label for="date">Date de facture</label>
+<input id="date" type="date" required>
+</div>
+<div class="field">
+<label for="ref">Référence facture</label>
+<input id="ref" maxlength="100" placeholder="N° de facture">
+</div>
+</div>
 
-  <h2>Historique des pertes</h2>
-  <section class="panel">
-    <div id="history"></div>
-    <div class="actions">
-      <button class="secondary" id="demo" type="button">Ajouter des données de démonstration</button>
-      <button class="secondary" id="reset" type="button">Réinitialiser les données</button>
-    </div>
-  </section>
+<h3>Informations recopiées de la facture</h3>
+
+<div class="field">
+<label for="product">Nom exact du produit</label>
+<input id="product" required maxlength="120" placeholder="Nom indiqué sur la facture">
+</div>
+
+<div class="inline">
+<div class="field">
+<label for="buyQty">Quantité achetée</label>
+<input id="buyQty" type="number" min=".001" step="any" required placeholder="Ex. 5">
+</div>
+<div class="field">
+<label for="buyUnit">Unité</label>
+<select id="buyUnit" required>
+<option value="">Choisir…</option>
+<option>kg</option>
+<option>g</option>
+<option>L</option>
+<option>ml</option>
+<option>pièce</option>
+<option>paquet</option>
+<option>bouteille</option>
+<option>carton</option>
+<option>portion</option>
+</select>
+</div>
+</div>
+
+<div class="field">
+<label for="price">Prix en euros indiqué sur la facture</label>
+<input id="price" type="number" min=".01" step=".01" required placeholder="Saisir le montant lu sur la facture">
+</div>
+
+<div class="field">
+<label for="priceType">Ce prix correspond à</label>
+<select id="priceType">
+<option value="total">La quantité totale achetée</option>
+<option value="unit">Une unité (prix unitaire)</option>
+</select>
+</div>
+
+<div class="field">
+<label for="note">Note (facultatif)</label>
+<input id="note" maxlength="200" placeholder="Ex. prix HT, remise…">
+</div>
+
+<label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:10px 0 14px">
+<input id="confirm" type="checkbox" required>
+Je confirme que les informations saisies correspondent à la facture.
+</label>
+
+<button type="submit">Confirmer et ajouter au catalogue</button>
+<div id="invoiceMsg" class="status hidden"></div>
+</form>
+</section>
+
+<section class="panel">
+<h2>2. Enregistrer une perte</h2>
+<p>Seuls les produits avec un prix confirmé sont proposés.</p>
+
+<form id="wasteForm">
+<div class="field">
+<label for="wProduct">Produit</label>
+<select id="wProduct" required>
+<option value="">Confirmez d’abord une facture</option>
+</select>
+</div>
+
+<div class="inline">
+<div class="field">
+<label for="wQty">Quantité jetée</label>
+<input id="wQty" type="number" min=".001" step="any" required placeholder="Ex. 300">
+</div>
+<div class="field">
+<label for="wUnit">Unité</label>
+<select id="wUnit" required>
+<option value="">Choisir…</option>
+<option>kg</option>
+<option>g</option>
+<option>L</option>
+<option>ml</option>
+<option>pièce</option>
+<option>paquet</option>
+<option>bouteille</option>
+<option>carton</option>
+<option>portion</option>
+</select>
+</div>
+</div>
+
+<div class="field">
+<label for="reason">Motif</label>
+<select id="reason" required>
+<option value="">Choisir…</option>
+<option>Produit périmé</option>
+<option>Préparation excessive</option>
+<option>Erreur de préparation</option>
+<option>Produit abîmé</option>
+<option>Retour client</option>
+<option>Autre</option>
+</select>
+</div>
+
+<div class="field">
+<label for="wDate">Date de la perte</label>
+<input id="wDate" type="date" required>
+</div>
+
+<div id="estimate" class="status">Le coût apparaîtra après sélection d’un produit et d’une quantité compatible.</div>
+<div id="unitHint" class="status warn hidden"></div>
+
+<button type="submit">Enregistrer la perte</button>
+<div id="wasteMsg" class="status hidden"></div>
+</form>
+</section>
+</div>
+
+<section class="panel">
+<h2>3. Catalogue des prix confirmés</h2>
+<div class="tablewrap">
+<table>
+<thead>
+<tr><th>Produit</th><th>Prix confirmé</th><th>Facture</th><th>Date</th><th></th></tr>
+</thead>
+<tbody id="catalog"></tbody>
+</table>
+</div>
+<div id="catEmpty" class="empty">Aucun prix confirmé.</div>
+</section>
+
+<section class="panel">
+<h2>4. Historique des pertes</h2>
+<div class="tablewrap">
+<table>
+<thead>
+<tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Motif</th><th>Coût estimé</th><th></th></tr>
+</thead>
+<tbody id="wastes"></tbody>
+</table>
+</div>
+<div id="wEmpty" class="empty">Aucune perte enregistrée.</div>
+
+<div class="actions" style="margin-top:14px">
+<button id="export" type="button" class="secondary">Exporter les données (JSON)</button>
+<button id="reset" type="button" class="danger">Effacer les données locales</button>
+</div>
+
+<p class="foot">Les données restent dans ce navigateur uniquement : elles ne sont pas synchronisées entre appareils. Cette démo n’est pas encore une base de données sécurisée pour un usage professionnel.</p>
+</section>
 </main>
 
-<footer>Prototype de démonstration — données conservées dans ce navigateur.</footer>
-
 <script>
-const prices = {
-  Poulet: 9,
-  Tomates: 2.5,
-  Salade: 4,
-  Pain: 0.6,
-  Frites: 2
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+const storageKey="antigaspi-v3";
+let data={catalog:[],wastes:[]};
+
+try{
+const x=JSON.parse(localStorage.getItem(storageKey)||"null");
+if(x&&Array.isArray(x.catalog)&&Array.isArray(x.wastes))data=x;
+}catch(e){}
+
+const today=()=>{
+let d=new Date();
+return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 };
 
-const units = {
-  Poulet: "kg",
-  Tomates: "kg",
-  Salade: "kg",
-  Pain: "pièce(s)",
-  Frites: "kg"
-};
+$("date").value=today();
+$("wDate").value=today();
 
-const euro = n => n.toLocaleString("fr-FR", {
-  style: "currency", currency: "EUR"
-});
+const euro=n=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(n);
+const fmt=n=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:3}).format(n);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const family=u=>["kg","g"].includes(u)?"masse":["L","ml"].includes(u)?"volume":u;
+const base=(q,u)=>u==="kg"?q*1000:u==="g"?q:u==="L"?q*1000:u==="ml"?q:q;
+const compatible=(a,b)=>family(a)===family(b);
 
-let losses = [];
-
-try {
-  losses = JSON.parse(localStorage.getItem("antigaspi_losses") || "[]");
-  if (!Array.isArray(losses)) losses = [];
-} catch {
-  losses = [];
-}
-
-const product = document.getElementById("product");
-const quantity = document.getElementById("quantity");
-const preview = document.getElementById("preview");
-
-function save() {
-  localStorage.setItem("antigaspi_losses", JSON.stringify(losses));
-}
-
-function calculatePreview() {
-  const q = Number(quantity.value) || 0;
-  preview.textContent = euro(q * prices[product.value]);
-}
-
-function render() {
-  const now = new Date();
-  const startWeek = new Date(now);
-  const weekday = (now.getDay() + 6) % 7;
-  startWeek.setDate(now.getDate() - weekday);
-  startWeek.setHours(0, 0, 0, 0);
-
-  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  let today = 0, week = 0, month = 0;
-
-  for (const loss of losses) {
-    const date = new Date(loss.date);
-    if (date.toDateString() === now.toDateString()) today += loss.cost;
-    if (date >= startWeek) week += loss.cost;
-    if (date >= startMonth) month += loss.cost;
-  }
-
-  document.getElementById("today").textContent = euro(today);
-  document.getElementById("week").textContent = euro(week);
-  document.getElementById("month").textContent = euro(month);
-
-  const history = document.getElementById("history");
-  history.replaceChildren();
-
-  if (losses.length === 0) {
-    const empty = document.createElement("p");
-    empty.className = "muted";
-    empty.textContent = "Aucune perte enregistrée pour le moment.";
-    history.appendChild(empty);
-    return;
-  }
-
-  [...losses].reverse().forEach(loss => {
-    const row = document.createElement("div");
-    row.className = "row";
-
-    const info = document.createElement("div");
-    const name = document.createElement("strong");
-    name.textContent = loss.product;
-    const detail = document.createElement("div");
-    detail.className = "muted";
-    detail.textContent =
-      `${loss.quantity} ${units[loss.product]} · ${loss.reason} · ` +
-      new Date(loss.date).toLocaleDateString("fr-FR");
-    info.append(name, detail);
-
-    const cost = document.createElement("strong");
-    cost.textContent = euro(loss.cost);
-
-    row.append(info, cost);
-    history.appendChild(row);
-  });
-}
-
-product.addEventListener("change", calculatePreview);
-quantity.addEventListener("input", calculatePreview);
-
-document.getElementById("wasteForm").addEventListener("submit", event => {
-  event.preventDefault();
-  const q = Number(quantity.value);
-  if (!Number.isFinite(q) || q <= 0) return;
-
-  losses.push({
-    product: product.value,
-    quantity: q,
-    reason: document.getElementById("reason").value,
-    cost: Math.round(q * prices[product.value] * 100) / 100,
-    date: new Date().toISOString()
-  });
-
-  save();
-  render();
-  quantity.value = "";
-  calculatePreview();
-});
-
-document.getElementById("demo").addEventListener("click", () => {
-  const now = new Date();
-  losses.push(
-    {product:"Poulet", quantity:2, reason:"Préparation excessive",
-     cost:18, date:now.toISOString()},
-    {product:"Tomates", quantity:3, reason:"Produit abîmé",
-     cost:7.5, date:now.toISOString()},
-    {product:"Pain", quantity:10, reason:"Restes d'assiette",
-     cost:6, date:now.toISOString()}
-  );
-  save();
-  render();
-});
-
-document.getElementById("reset").addEventListener("click", () => {
-  if (!confirm("Effacer toutes les pertes de ce navigateur ?")) return;
-  losses = [];
-  save();
-  render();
-});
-
-calculatePreview();
+function persist(){
+localStorage.setItem(storageKey,JSON.stringify(data));
 render();
+}
+
+function render(){
+$("catalog").innerHTML="";
+$("catEmpty").classList.toggle("hidden",data.catalog.length>0);
+
+data.catalog.slice().reverse().forEach(p=>{
+let tr=document.createElement("tr");
+tr.innerHTML=`<td><b>${esc(p.name)}</b><div class="small">Référence : ${esc(p.unit)}</div></td>
+<td>${euro(p.pricePerBase*base(1,p.unit))} / ${esc(p.unit)}</td>
+<td>${esc(p.fileName)}<div class="small">${esc(p.supplier)}</div></td>
+<td>${esc(p.date)}</td>
+<td><button class="danger" data-del-p="${esc(p.id)}" type="button">Supprimer</button></td>`;
+$("catalog").append(tr);
+});
+
+let sel=$("wProduct"),old=sel.value;
+sel.innerHTML='<option value="">Choisir un produit confirmé…</option>';
+data.catalog.forEach(p=>{
+let o=document.createElement("option");
+o.value=p.id;
+o.textContent=`${p.name} — ${euro(p.pricePerBase*base(1,p.unit))}/${p.unit}`;
+sel.append(o);
+});
+if(data.catalog.some(p=>p.id===old))sel.value=old;
+
+$("wastes").innerHTML="";
+$("wEmpty").classList.toggle("hidden",data.wastes.length>0);
+
+data.wastes.slice().reverse().forEach(w=>{
+let tr=document.createElement("tr");
+tr.innerHTML=`<td>${esc(w.date)}</td>
+<td>${esc(w.name)}<div class="small">Facture du ${esc(w.invoiceDate)}</div></td>
+<td>${fmt(w.qty)} ${esc(w.unit)}</td>
+<td>${esc(w.reason)}</td>
+<td><b>${euro(w.cost)}</b></td>
+<td><button class="danger" data-del-w="${esc(w.id)}" type="button">Supprimer</button></td>`;
+$("wastes").append(tr);
+});
+
+const d=today(),now=new Date(),start=new Date(now);
+start.setHours(0,0,0,0);
+start.setDate(start.getDate()-((start.getDay()+6)%7));
+const ym=d.slice(0,7);
+const sum=a=>a.reduce((s,x)=>s+x.cost,0);
+const td=data.wastes.filter(x=>x.date===d);
+const wk=data.wastes.filter(x=>new Date(x.date+"T12:00:00")>=start);
+const mo=data.wastes.filter(x=>x.date.startsWith(ym));
+
+$("today").textContent=euro(sum(td));
+$("todayCount").textContent=td.length+" perte"+(td.length>1?"s":"");
+$("week").textContent=euro(sum(wk));
+$("month").textContent=euro(sum(mo));
+estimate();
+}
+
+function estimate(){
+let p=data.catalog.find(x=>x.id===$("wProduct").value);
+let q=Number($("wQty").value),u=$("wUnit").value;
+$("unitHint").classList.add("hidden");
+
+if(!p||!q||!u){
+$("estimate").textContent="Le coût apparaîtra après sélection d’un produit et d’une quantité compatible.";
+return;
+}
+if(!compatible(p.unit,u)){
+$("estimate").textContent="Unité incompatible : le produit est enregistré en "+p.unit+".";
+return;
+}
+let cost=p.pricePerBase*base(q,u);
+$("estimate").textContent="Coût estimé : "+euro(cost)+" (prix confirmé sur facture du "+p.date+").";
+
+if(p.unit!==u){
+$("unitHint").classList.remove("hidden");
+$("unitHint").textContent="Conversion automatique entre "+u+" et "+p.unit+". Vérifiez que ces unités conviennent au produit.";
+}
+}
+
+$("file").addEventListener("change",()=>{
+let f=$("file").files[0],box=$("preview");
+box.innerHTML="";
+box.classList.add("hidden");
+if(!f)return;
+
+if(!(f.type.startsWith("image/")||f.type==="application/pdf")){
+alert("Choisissez une image ou un PDF.");
+$("file").value="";
+return;
+}
+
+box.append(document.createTextNode("Fichier : "+f.name+" ("+Math.round(f.size/1024)+" Ko)"));
+
+if(f.type.startsWith("image/")){
+let im=document.createElement("img");
+im.alt="Aperçu facture";
+im.src=URL.createObjectURL(f);
+box.append(im);
+}else{
+let a=document.createElement("a");
+a.href=URL.createObjectURL(f);
+a.target="_blank";
+a.rel="noopener";
+a.textContent="Ouvrir le PDF pour vérifier la facture";
+box.append(document.createElement("br"),a);
+}
+box.classList.remove("hidden");
+});
+
+$("invoiceForm").addEventListener("submit",e=>{
+e.preventDefault();
+let f=$("file").files[0];
+let name=$("product").value.trim();
+let q=Number($("buyQty").value);
+let u=$("buyUnit").value;
+let price=Number($("price").value);
+
+if(!f||!name||q<=0||!u||price<=0||!$("confirm").checked){
+alert("Complétez les champs et confirmez les informations de la facture.");
+return;
+}
+
+let total=$("priceType").value==="total"?price:price*q;
+let perBase=total/base(q,u);
+let p={
+id:Date.now()+"-"+Math.random(),
+name,
+unit:u,
+pricePerBase:perBase,
+fileName:f.name,
+supplier:$("supplier").value.trim(),
+date:$("date").value,
+ref:$("ref").value.trim(),
+note:$("note").value.trim()
+};
+
+data.catalog.push(p);
+persist();
+$("invoiceMsg").classList.remove("hidden");
+$("invoiceMsg").textContent="Prix confirmé et produit ajouté au catalogue.";
+$("wProduct").value=p.id;
+$("invoiceForm").reset();
+$("date").value=today();
+$("preview").innerHTML="";
+$("preview").classList.add("hidden");
+$("confirm").checked=false;
+});
+
+["wProduct","wQty","wUnit"].forEach(id=>
+$(id).addEventListener(id==="wQty"?"input":"change",estimate)
+);
+
+$("wasteForm").addEventListener("submit",e=>{
+e.preventDefault();
+let p=data.catalog.find(x=>x.id===$("wProduct").value);
+let q=Number($("wQty").value);
+let u=$("wUnit").value;
+
+if(!p||q<=0||!u){
+alert("Choisissez un produit, une quantité et une unité.");
+return;
+}
+if(!compatible(p.unit,u)){
+alert("Unité incompatible : le produit est enregistré en "+p.unit+".");
+return;
+}
+
+let cost=p.pricePerBase*base(q,u);
+data.wastes.push({
+id:Date.now()+"-"+Math.random(),
+name:p.name,
+productId:p.id,
+qty:q,
+unit:u,
+reason:$("reason").value,
+date:$("wDate").value,
+cost,
+invoiceDate:p.date
+});
+
+persist();
+$("wasteMsg").classList.remove("hidden");
+$("wasteMsg").textContent="Perte enregistrée : "+euro(cost);
+$("wasteForm").reset();
+$("wDate").value=today();
+estimate();
+});
+
+document.addEventListener("click",e=>{
+let p=e.target.closest("[data-del-p]");
+let w=e.target.closest("[data-del-w]");
+
+if(p&&confirm("Supprimer ce prix du catalogue ? L’historique des pertes est conservé.")){
+data.catalog=data.catalog.filter(x=>x.id!==p.dataset.delP);
+persist();
+}
+if(w&&confirm("Supprimer cette perte ?")){
+data.wastes=data.wastes.filter(x=>x.id!==w.dataset.delW);
+persist();
+}
+});
+
+$("export").addEventListener("click",()=>{
+let blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),...data},null,2)],{type:"application/json"});
+let url=URL.createObjectURL(blob);
+let a=document.createElement("a");
+a.href=url;
+a.download="antigaspi-donnees.json";
+a.click();
+URL.revokeObjectURL(url);
+});
+
+$("reset").addEventListener("click",()=>{
+if(confirm("Effacer tous les prix et pertes stockés dans ce navigateur ?")){
+data={catalog:[],wastes:[]};
+persist();
+}
+});
+
+render();
+})();
 </script>
 </body>
 </html>
