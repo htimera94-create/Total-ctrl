@@ -140,12 +140,13 @@ const UN={"pièce":{fam:"n",f:1},portion:{fam:"n",f:1},g:{fam:"m",f:.001},kg:{fa
 const FAM={kg:"m",L:"v","pièce":"n"};
 const FAMU={m:["g","kg"],v:["mL","L"],n:["pièce","portion"],all:["pièce","portion","g","kg","mL","L"]};
 const DEF={m:"g",v:"mL",n:"pièce",all:"pièce"};
-/* Aliments classiques de fast-food : coûts d'achat FICTIFS, par kg (m), par L (v) ou par pièce (n) */
-const FASTFOOD=[["Burger classique","n",1.8],["Cheeseburger","n",1.6],["Double burger","n",2.6],["Burger poulet","n",1.9],["Steak haché","m",11],["Filet de poulet pané","m",8.5],["Nuggets","m",7.5],["Frites","m",2.2],["Pain burger","n",.35],["Fromage en tranche","m",8],["Salade","m",4],["Tomates","m",3.2],["Oignons","m",1.5],["Bacon","m",9],["Sauce (ketchup, mayo…)","v",5],["Boisson gazeuse","v",1.5],["Milkshake","v",4],["Glace","v",5],["Café","v",3],["Wrap","n",1.2],["Sandwich","n",2],["Kebab (viande)","m",9],["Pizza","n",3],["Cookie ou dessert","n",.9]];
-const CATS=["Viandes","Poissons","Produits laitiers","Fruits et légumes","Épicerie","Boulangerie","Sauces et boissons","Plats préparés"];
+const BASEU={m:"kg",v:"L",n:"pièce"};
+/* Produits types de fast-food (import optionnel dans le catalogue) : coûts d'achat FICTIFS par kg, L ou pièce */
+const FASTFOOD=[["Burger classique","n",1.8,"Plats préparés"],["Cheeseburger","n",1.6,"Plats préparés"],["Double burger","n",2.6,"Plats préparés"],["Burger poulet","n",1.9,"Plats préparés"],["Steak haché","m",11,"Viandes"],["Filet de poulet pané","m",8.5,"Viandes"],["Nuggets","m",7.5,"Viandes"],["Frites","m",2.2,"Épicerie"],["Pain burger","n",.35,"Boulangerie"],["Fromage en tranche","m",8,"Produits laitiers"],["Salade","m",4,"Fruits et légumes"],["Tomates","m",3.2,"Fruits et légumes"],["Oignons","m",1.5,"Fruits et légumes"],["Bacon","m",9,"Viandes"],["Sauce (ketchup, mayo…)","v",5,"Sauces et boissons"],["Boisson gazeuse","v",1.5,"Sauces et boissons"],["Milkshake","v",4,"Sauces et boissons"],["Glace","v",5,"Plats préparés"],["Café","v",3,"Sauces et boissons"],["Wrap","n",1.2,"Plats préparés"],["Sandwich","n",2,"Plats préparés"],["Kebab (viande)","m",9,"Viandes"],["Pizza","n",3,"Plats préparés"],["Cookie ou dessert","n",.9,"Boulangerie"]];
+const CATS=["Viandes","Poissons","Produits laitiers","Fruits et légumes","Épicerie","Boulangerie","Sauces et boissons","Plats préparés","Autre"];
 const NAV={
  admin:[["accueil","Vue d'ensemble"],["restaurants","Restaurants inscrits"]],
- responsable:[["accueil","Tableau de bord"],["gaspillages","Gaspillages"],["catalogue","Catalogue produits"],["restaurant","Mon restaurant"]],
+ responsable:[["accueil","Tableau de bord"],["gaspillages","Gaspillages"],["catalogue","Catalogue produits"],["achats","Achats et factures"],["restaurant","Mon restaurant"]],
  employe:[["saisie","Enregistrer un gaspillage"]]
 };
 const day=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
@@ -171,17 +172,19 @@ function seed(){
   W.push({id:uid(),restaurant:r,product:p.name,unit:p.unit,qty,cost:+(qty*p.price).toFixed(2),
    reason:REASONS[Math.floor(rnd()*REASONS.length)],date:day(-Math.floor(rnd()*42)),by:r==="r1"?"employe@antigaspipro.fr":"employe.burger@antigaspipro.fr"});
  }
- return{restaurants:R,users:U,products:P,wastes:W};
+ const A=[["Poulet fermier",20,"kg",190,9.5],["Tomates",15,"kg",48,3.2]].map(([product,qty,unit,total,unitPrice],i)=>({id:uid(),restaurant:"r1",date:day(-5-i),supplier:"Grossiste Démo (fictif)",product,qty,unit,total,unitPrice,baseUnit:unit}));
+ return{restaurants:R,users:U,products:P,wastes:W,purchases:A};
 }
 /* Couche de stockage : c'est la seule partie à remplacer par Supabase plus tard. */
 let db;
-function load(){try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){db=null}if(!db||!db.users){db=seed();save()}}
+function load(){try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){db=null}if(!db||!db.users){db=seed();save()}db.purchases=db.purchases||[]}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Enregistrement impossible dans ce navigateur.",1)}}
 
 /* ========= Utilitaires ========= */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const eur=n=>Number(n||0).toLocaleString("fr-FR",{style:"currency",currency:"EUR"});
+const pfmt=x=>Number(x).toLocaleString("fr-FR",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:4});
 const num=n=>Number(n||0).toLocaleString("fr-FR",{maximumFractionDigits:2});
 const fdate=d=>d?new Date(d+"T00:00").toLocaleDateString("fr-FR"):"";
 const ago=d=>Math.round((new Date(new Date().toISOString().slice(0,10)+"T00:00")-new Date(d+"T00:00"))/864e5);
@@ -273,45 +276,33 @@ function wasteTable(list,opts={}){
  return`<div class="tw"><table><thead><tr><th>Date</th>${opts.rest?"<th>Restaurant</th>":""}<th>Produit</th><th>Quantité</th><th>Raison</th><th>Coût estimé</th><th>Saisi par</th>${opts.del?"<th>Action</th>":""}</tr></thead><tbody>`+
  list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(w=>`<tr><td>${fdate(w.date)}</td>${opts.rest?`<td>${esc(rest(w.restaurant).name)}</td>`:""}<td><b>${esc(w.product)}</b></td><td>${num(w.qty)} ${esc(w.unit)}</td><td>${esc(w.reason)}</td><td>${eur(w.cost)}</td><td>${esc(uname(w.by))}</td>${opts.del?`<td><button class="btn danger sm" data-delw="${w.id}">Supprimer</button></td>`:""}</tr>`).join("")+"</tbody></table></div>"}
 function addWaste(){
- const mineP=db.products.filter(p=>p.restaurant===me.restaurant);
- const seen=new Set(mineP.map(p=>p.name.toLowerCase()));
- const cat=mineP.map(p=>({name:p.name,fam:FAM[p.unit]||"n",price:p.price}));
- const std=FASTFOOD.filter(x=>!seen.has(x[0].toLowerCase())).map(x=>({name:x[0],fam:x[1],price:x[2]}));
- const all=[...std,...cat],opt=l=>l.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join("");
+ const P=db.products.filter(p=>p.restaurant===me.restaurant);
+ if(!P.length){toast(me.role==="employe"?"Le catalogue de votre restaurant est vide : demandez à votre responsable d'ajouter des produits.":"Le catalogue est vide : ajoutez des produits ou enregistrez un achat avant de saisir un gaspillage.",1);return}
  const f=$("#dform");
  f.innerHTML=`<h2>Enregistrer un gaspillage</h2>
- <label for="w_p">Aliment</label>
- <select id="w_p"><optgroup label="Aliments classiques de fast-food">${opt(std)}</optgroup>${cat.length?`<optgroup label="Catalogue de mon restaurant">${opt(cat)}</optgroup>`:""}<option value="__autre">Autres (saisie libre)</option></select>
- <div id="w_nw" class="hidden"><label for="w_n">Nom de l'aliment</label><input id="w_n" maxlength="60"></div>
+ <label for="w_p">Produit du catalogue</label>
+ <select id="w_p">${P.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</select>
  <label for="w_q">Quantité jetée</label>
  <div style="display:flex;gap:.5rem"><input id="w_q" type="number" min="0" step="any" inputmode="decimal" style="flex:1"><select id="w_u" style="flex:1" aria-label="Unité"></select></div>
  <label for="w_pr">Prix unitaire (par <span id="w_ul"></span>)</label>
  <input id="w_pr" readonly>
- <small id="w_h" style="color:var(--mute)">Prix d'achat indicatif fictif. Pour utiliser vos vrais coûts, le responsable ajoute le produit au catalogue.</small>
+ <small style="color:var(--mute)">Prix issu du catalogue de votre restaurant.</small>
  <p id="w_c" style="font-weight:700;margin:.6rem 0 0"></p>
  <label for="w_r">Raison</label><select id="w_r">${REASONS.map(r=>`<option>${esc(r)}</option>`).join("")}</select>
  <label for="w_d">Date</label><input id="w_d" type="date" max="${day(0)}" value="${day(0)}" required>
  <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
- const cur=()=>all.find(x=>x.name===$("#w_p").value),isAutre=()=>$("#w_p").value==="__autre";
- const fmtP=x=>Number(x).toLocaleString("fr-FR",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:4});
- const curPrice=()=>isAutre()?parseFloat($("#w_pr").value):cur().price*UN[$("#w_u").value].f;
- function cost(){const q=parseFloat($("#w_q").value),up=curPrice();$("#w_c").textContent=(q>0&&up>=0)?"Coût estimé : "+eur(q*up):"Coût estimé : –"}
- function price(){const u=$("#w_u").value,pr=$("#w_pr");$("#w_ul").textContent=u;
-  if(isAutre()){if(pr.readOnly){pr.readOnly=false;pr.type="number";pr.min="0";pr.step="any";pr.value="";pr.placeholder="Prix en € par "+u}}
-  else{pr.readOnly=true;pr.type="text";pr.removeAttribute("placeholder");pr.value=fmtP(cur().price*UN[u].f)}
-  $("#w_h").classList.toggle("hidden",isAutre());cost()}
- function units(){const a=isAutre(),fam=a?"all":cur().fam;$("#w_nw").classList.toggle("hidden",!a);
-  $("#w_u").innerHTML=FAMU[fam].map(u=>`<option ${u===DEF[fam]?"selected":""}>${u}</option>`).join("");price()}
- $("#w_p").onchange=units;$("#w_u").onchange=price;$("#w_q").oninput=cost;$("#w_pr").oninput=cost;
+ const cur=()=>P.find(x=>x.id===$("#w_p").value),curPrice=()=>cur().price*UN[$("#w_u").value].f;
+ function cost(){const q=parseFloat($("#w_q").value);$("#w_c").textContent=q>0?"Coût estimé : "+eur(q*curPrice()):"Coût estimé : –"}
+ function price(){$("#w_ul").textContent=$("#w_u").value;$("#w_pr").value=pfmt(curPrice());cost()}
+ function units(){const fam=FAM[cur().unit]||"n";$("#w_u").innerHTML=FAMU[fam].map(u=>`<option ${u===DEF[fam]?"selected":""}>${u}</option>`).join("");price()}
+ $("#w_p").onchange=units;$("#w_u").onchange=price;$("#w_q").oninput=cost;
  $("#fc").onclick=()=>$("#dlg").close();
  f.onsubmit=e=>{e.preventDefault();
-  const name=isAutre()?$("#w_n").value.trim():$("#w_p").value,q=parseFloat($("#w_q").value),u=$("#w_u").value,up=curPrice(),d=$("#w_d").value;
-  if(!name){toast("Indiquez le nom de l'aliment.",1);return}
+  const p=cur(),q=parseFloat($("#w_q").value),u=$("#w_u").value,d=$("#w_d").value;
   if(!(q>0)){toast("La quantité doit être supérieure à 0.",1);return}
-  if(!(up>0)){toast("Indiquez un prix unitaire supérieur à 0.",1);return}
   if(!d||d>day(0)){toast("La date ne peut pas être dans le futur.",1);return}
-  db.wastes.push({id:uid(),restaurant:me.restaurant,product:name,unit:u,qty:q,cost:+(q*up).toFixed(2),reason:$("#w_r").value,date:d,by:me.email});
-  save();$("#dlg").close();route();toast(`Gaspillage enregistré : ${num(q)} ${u} de ${name}.`)};
+  db.wastes.push({id:uid(),restaurant:me.restaurant,product:p.name,unit:u,qty:q,cost:+(q*curPrice()).toFixed(2),reason:$("#w_r").value,date:d,by:me.email});
+  save();$("#dlg").close();route();toast(`Gaspillage enregistré : ${num(q)} ${u} de ${p.name}.`)};
  units();$("#dlg").showModal();
 }
 function wireDelW(){document.querySelectorAll("[data-delw]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cette saisie","Cette ligne sera retirée des statistiques.","Supprimer",()=>{db.wastes=db.wastes.filter(w=>w.id!==b.dataset.delw);save();route();toast("Saisie supprimée.")}))}
@@ -339,7 +330,7 @@ WIRE["admin.restaurants"]=()=>{
   r.status=r.status==="Actif"?"Suspendu":"Actif";save();route();toast(`${r.name} : ${r.status==="Actif"?"réactivé":"suspendu"}.`)});
  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce restaurant","Son catalogue, son équipe et tous ses gaspillages seront aussi supprimés.","Supprimer",()=>{
   const id=b.dataset.del;db.restaurants=db.restaurants.filter(r=>r.id!==id);db.products=db.products.filter(p=>p.restaurant!==id);
-  db.wastes=db.wastes.filter(w=>w.restaurant!==id);db.users=db.users.filter(u=>u.restaurant!==id);save();route();toast("Restaurant supprimé.")}))};
+  db.wastes=db.wastes.filter(w=>w.restaurant!==id);db.purchases=db.purchases.filter(a=>a.restaurant!==id);db.users=db.users.filter(u=>u.restaurant!==id);save();route();toast("Restaurant supprimé.")}))};
 
 /* ========= Responsable de restaurant ========= */
 PAGES.responsable.accueil=()=>{const W=mineW(),W30=last30(W),v=variation(W);
@@ -352,9 +343,13 @@ PAGES.responsable.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages</h1><but
 WIRE["responsable.gaspillages"]=()=>{$("#addw").onclick=addWaste;wireDelW()};
 const prodFields=[{k:"name",l:"Nom du produit"},{k:"cat",l:"Catégorie",opts:CATS},{k:"unit",l:"Unité",opts:UNITS},{k:"price",l:"Coût d'achat par unité (€)",t:"number",pos:1}];
 PAGES.responsable.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
- return`<div class="bar-top"><h1>Catalogue produits</h1><button class="btn" id="addp">Ajouter un produit</button></div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Unité</th><th>Coût unitaire</th><th>Actions</th></tr></thead><tbody>`+
- P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${esc(p.unit)}</td><td>${eur(p.price)}</td><td><button class="btn sec sm" data-edit="${p.id}">Modifier</button> <button class="btn danger sm" data-del="${p.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide. Ajoutez les produits que vos employés pourront déclarer comme gaspillés."))};
+ return`<div class="bar-top"><h1>Catalogue produits</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="addstd">Importer les produits types</button><button class="btn" id="addp">Ajouter un produit</button></div></div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Unité</th><th>Coût unitaire</th><th>Actions</th></tr></thead><tbody>`+
+ P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${esc(p.unit)}</td><td>${pfmt(p.price)} / ${esc(p.unit)}</td><td><button class="btn sec sm" data-edit="${p.id}">Modifier</button> <button class="btn danger sm" data-del="${p.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide. Ajoutez vos produits, importez les produits types de fast-food ou enregistrez un achat : vos employés ne peuvent déclarer que les produits de ce catalogue."))};
 WIRE["responsable.catalogue"]=()=>{
+ $("#addstd").onclick=()=>confirmBox("Importer les produits types","Les produits types de fast-food (burgers, frites, sauces…) sont ajoutés à votre catalogue avec des prix d'achat fictifs. Vos produits existants ne sont pas modifiés. Enregistrez ensuite vos achats pour obtenir vos vrais prix.","Importer",()=>{
+  const have=new Set(db.products.filter(p=>p.restaurant===me.restaurant).map(p=>p.name.toLowerCase()));let n=0;
+  FASTFOOD.forEach(([name,fam,price,cat])=>{if(!have.has(name.toLowerCase())){db.products.push({id:uid(),restaurant:me.restaurant,name,cat,unit:BASEU[fam],price});n++}});
+  save();route();toast(n+" produit(s) ajouté(s) au catalogue.")});
  $("#addp").onclick=()=>openForm("Ajouter un produit",prodFields,{cat:CATS[0],unit:"kg"},o=>{
   if(db.products.some(p=>p.restaurant===me.restaurant&&p.name.toLowerCase()===o.name.toLowerCase())){toast("Ce produit existe déjà dans le catalogue.",1);return}
   o.id=uid();o.restaurant=me.restaurant;db.products.push(o);save();route();toast("Produit ajouté au catalogue.")});
@@ -371,6 +366,82 @@ WIRE["responsable.restaurant"]=()=>{
   o.email=o.email.toLowerCase();if(db.users.some(u=>u.email===o.email)){toast("Cette adresse e-mail existe déjà.",1);return}
   db.users.push({email:o.email,name:o.name,role:"employe",restaurant:me.restaurant});save();route();toast("Employé ajouté (démonstration : aucun e-mail envoyé).")});
  document.querySelectorAll("[data-delu]").forEach(b=>b.onclick=()=>confirmBox("Retirer cet employé","Ses saisies passées sont conservées.","Retirer",()=>{db.users=db.users.filter(u=>u.email!==b.dataset.delu);save();route();toast("Employé retiré.")}))};
+
+/* ========= Achats et factures (responsable) ========= */
+const UALIAS={piece:"pièce",pieces:"pièce",pcs:"pièce",pc:"pièce",u:"pièce",unite:"pièce",unites:"pièce",portion:"portion",portions:"portion",g:"g",gr:"g",gramme:"g",grammes:"g",kg:"kg",kilo:"kg",kilos:"kg",ml:"mL",l:"L",litre:"L",litres:"L"};
+const normUnit=s=>UALIAS[(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()]||s;
+function infoBox(title,html){const f=$("#dform");f.onsubmit=e=>e.preventDefault();
+ f.innerHTML=`<h2>${esc(title)}</h2>${html}<div class="acts"><button type="button" class="btn" id="fc">Fermer</button></div>`;$("#fc").onclick=()=>$("#dlg").close();$("#dlg").showModal()}
+function addPurchase(l){
+ l.product=(l.product||"").trim();
+ if(!l.product)return"Indiquez le produit.";
+ if(!UN[l.unit])return`Unité inconnue « ${l.unit} ».`;
+ if(!(l.qty>0))return"La quantité doit être supérieure à 0.";
+ if(!(l.total>0))return"Le total payé doit être supérieur à 0.";
+ if(!l.date||l.date>day(0))return"La date est invalide ou dans le futur.";
+ const fam=UN[l.unit].fam,up=+(l.total/(l.qty*UN[l.unit].f)).toFixed(4);
+ const p=db.products.find(x=>x.restaurant===me.restaurant&&x.name.toLowerCase()===l.product.toLowerCase());
+ if(p){if(FAM[p.unit]!==fam)return`« ${p.name} » est géré en ${p.unit} dans le catalogue : utilisez une unité compatible.`;p.price=up}
+ else db.products.push({id:uid(),restaurant:me.restaurant,name:l.product,cat:CATS.includes(l.cat)?l.cat:"Autre",unit:BASEU[fam],price:up});
+ db.purchases.push({id:uid(),restaurant:me.restaurant,date:l.date,supplier:l.supplier||"",product:p?p.name:l.product,qty:l.qty,unit:l.unit,total:l.total,unitPrice:up,baseUnit:BASEU[fam]});
+ return null}
+PAGES.responsable.achats=()=>{const A=db.purchases.filter(a=>a.restaurant===me.restaurant);
+ return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
+ <input type="file" id="csvf" accept=".csv,.txt,text/csv" class="hidden">
+ <div class="note">Le prix unitaire est calculé automatiquement (total payé ÷ quantité) et met à jour le catalogue, donc le coût des gaspillages. Les factures PDF ou photos ne sont pas lues automatiquement dans cette version : la lecture automatique demande un service côté serveur, prévu avec Supabase. En attendant, saisissez les lignes ou importez un fichier CSV. Pour fixer un prix à la main, modifiez le produit dans le catalogue.</div>`+
+ (A.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Fournisseur</th><th>Produit</th><th>Quantité</th><th>Total payé</th><th>Prix unitaire calculé</th><th>Action</th></tr></thead><tbody>`+
+ A.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr><td>${fdate(a.date)}</td><td>${esc(a.supplier||"–")}</td><td><b>${esc(a.product)}</b></td><td>${num(a.qty)} ${esc(a.unit)}</td><td>${eur(a.total)}</td><td>${pfmt(a.unitPrice)} / ${esc(a.baseUnit)}</td><td><button class="btn danger sm" data-dela="${a.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun achat enregistré. Ajoutez une facture ligne par ligne ou importez un fichier CSV."))};
+function addPurchaseForm(){
+ const P=db.products.filter(p=>p.restaurant===me.restaurant),f=$("#dform");
+ f.innerHTML=`<h2>Ajouter un achat</h2>
+ <label for="a_d">Date de la facture</label><input id="a_d" type="date" max="${day(0)}" value="${day(0)}" required>
+ <label for="a_s">Fournisseur (facultatif)</label><input id="a_s" maxlength="60">
+ <label for="a_p">Produit</label><input id="a_p" list="a_dl" maxlength="60" autocomplete="off" placeholder="Choisissez ou tapez un nouveau produit"><datalist id="a_dl">${P.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
+ <label for="a_c">Catégorie (pour un nouveau produit)</label><select id="a_c">${CATS.map(c=>`<option>${esc(c)}</option>`).join("")}</select>
+ <label for="a_q">Quantité achetée</label><div style="display:flex;gap:.5rem"><input id="a_q" type="number" min="0" step="any" inputmode="decimal" style="flex:1"><select id="a_u" style="flex:1" aria-label="Unité">${Object.keys(UN).map(u=>`<option ${u==="kg"?"selected":""}>${u}</option>`).join("")}</select></div>
+ <label for="a_t">Total payé (€)</label><input id="a_t" type="number" min="0" step="any" inputmode="decimal">
+ <p id="a_r" style="font-weight:700;margin:.6rem 0 0"></p>
+ <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
+ function calc(){const q=parseFloat($("#a_q").value),t=parseFloat($("#a_t").value),u=$("#a_u").value;
+  $("#a_r").textContent=(q>0&&t>0)?`Prix unitaire calculé : ${pfmt(t/(q*UN[u].f))} par ${BASEU[UN[u].fam]}`+(UN[u].f!==1?` (soit ${pfmt(t/q)} par ${u})`:""):"Prix unitaire calculé : –"}
+ $("#a_p").oninput=()=>{const p=P.find(x=>x.name.toLowerCase()===$("#a_p").value.trim().toLowerCase());
+  if(p&&FAM[p.unit]!==UN[$("#a_u").value].fam)$("#a_u").value=p.unit;calc()};
+ ["a_q","a_t"].forEach(i=>$("#"+i).oninput=calc);$("#a_u").onchange=calc;
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=e=>{e.preventDefault();
+  const err=addPurchase({date:$("#a_d").value,supplier:$("#a_s").value.trim(),product:$("#a_p").value,cat:$("#a_c").value,qty:parseFloat($("#a_q").value),unit:$("#a_u").value,total:parseFloat($("#a_t").value)});
+  if(err){toast(err,1);return}
+  const a=db.purchases[db.purchases.length-1];save();$("#dlg").close();route();toast(`Achat enregistré : ${pfmt(a.unitPrice)} par ${a.baseUnit}, catalogue mis à jour.`)};
+ $("#dlg").showModal();
+}
+function parseCSV(text){
+ const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).map((l,i)=>({l,n:i+1})).filter(x=>x.l.trim());
+ if(lines.length<2)return{err:"Le fichier doit contenir une ligne d'en-têtes et au moins une ligne de données."};
+ const d=lines[0].l.split(";").length>=lines[0].l.split(",").length?";":",";
+ const split=s=>{const o=[];let c="",q=false;for(const ch of s){if(ch==='"')q=!q;else if(ch===d&&!q){o.push(c);c=""}else c+=ch}o.push(c);return o.map(x=>x.trim())};
+ const H=split(lines[0].l).map(s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,""));
+ const ix=(...k)=>H.findIndex(h=>k.includes(h));
+ const c={date:ix("date"),sup:ix("fournisseur"),prod:ix("produit","article","designation"),qty:ix("quantite","qte"),unit:ix("unite"),tot:ix("total","totalpaye","montant","totalht","prixtotal"),cat:ix("categorie")};
+ if(c.prod<0||c.qty<0||c.unit<0||c.tot<0)return{err:"Colonnes obligatoires manquantes : produit, quantite, unite, total."};
+ const nb=s=>{s=String(s||"").replace(/[€\s]/g,"");if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");return parseFloat(s)};
+ const dt=s=>{s=(s||"").trim();if(!s)return day(0);let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return s;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`:"invalide"};
+ return{rows:lines.slice(1).map(x=>{const r=split(x.l),g=i=>i<0?"":(r[i]||"");
+  return{n:x.n,line:{date:dt(g(c.date)),supplier:g(c.sup),product:g(c.prod),cat:g(c.cat),qty:nb(g(c.qty)),unit:normUnit(g(c.unit)),total:nb(g(c.tot))}}})};
+}
+function importCSV(text){
+ const res=parseCSV(text);if(res.err){infoBox("Import impossible",`<p>${esc(res.err)}</p>`);return}
+ let ok=0;const errs=[];
+ res.rows.forEach(r=>{const e=addPurchase(r.line);if(e)errs.push(`Ligne ${r.n} : ${e}`);else ok++});
+ if(ok)save();route();
+ infoBox("Import terminé",`<p><b>${ok}</b> ligne(s) importée(s), <b>${errs.length}</b> ignorée(s).</p>`+(errs.length?`<ul>${errs.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${errs.length>8?`<p>… et ${errs.length-8} autre(s).</p>`:""}`:"")+(ok?"<p>Les prix unitaires sont calculés et le catalogue est à jour.</p>":""))}
+WIRE["responsable.achats"]=()=>{
+ $("#adda").onclick=addPurchaseForm;
+ $("#csvm").onclick=()=>{const t="\uFEFFdate;fournisseur;produit;quantite;unite;total;categorie\n"+day(0)+";Grossiste Démo;Steak haché;10;kg;110;Viandes\n"+day(0)+";Grossiste Démo;Pains burger;200;pièce;70;Boulangerie\n";
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download="modele-achats.csv";a.click()};
+ $("#csvi").onclick=()=>$("#csvf").click();
+ $("#csvf").onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>1e6){toast("Fichier trop volumineux (1 Mo maximum).",1);return}
+  const r=new FileReader();r.onload=()=>importCSV(String(r.result));r.readAsText(file,"utf-8")};
+ document.querySelectorAll("[data-dela]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cet achat","La ligne est retirée de l'historique ; le prix du catalogue n'est pas modifié.","Supprimer",()=>{db.purchases=db.purchases.filter(a=>a.id!==b.dataset.dela);save();route();toast("Achat supprimé.")}))};
 
 /* ========= Employé ========= */
 PAGES.employe.saisie=()=>{const W=mineW().filter(w=>w.by===me.email);
