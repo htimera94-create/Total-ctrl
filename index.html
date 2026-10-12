@@ -1,456 +1,147 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AntiGaspiPro – Réduire le gaspillage en restauration</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AntiGaspiPro — Réduction du gaspillage alimentaire</title>
 <style>
-:root{--bg:#f2f5f0;--card:#fff;--ink:#1b2a22;--mute:#5d6b63;--line:#dde4dc;--g:#1f6f46;--g2:#e3f1e8;--am:#b7791f;--am2:#fcf1d9;--rd:#b42318;--rd2:#fde8e6;--bl:#175cd3;--bl2:#e4edfb;--r:10px}
+:root{--vert:#16a34a;--vert-fonce:#15803d;--rouge:#dc2626;--orange:#f59e0b;--bleu:#2563eb;--gris:#64748b;--fond:#f1f5f9;--carte:#fff;--bord:#e2e8f0;--texte:#0f172a;--ombre:0 1px 3px rgba(15,23,42,.08)}
 *{box-sizing:border-box}
-body{margin:0;font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-h1,h2{margin:0 0 .5em;line-height:1.25;font-family:Georgia,"Times New Roman",serif}
-h1{font-size:1.6rem}h2{font-size:1.2rem}
-button,input,select{font:inherit}
-:focus-visible{outline:3px solid var(--bl);outline-offset:2px}
-.btn{border:1px solid var(--g);background:var(--g);color:#fff;padding:.5rem .9rem;border-radius:8px;cursor:pointer;font-weight:600}
-.btn:hover{filter:brightness(1.1)}
-.btn.sec{background:#fff;color:var(--g)}
-.btn.danger{background:#fff;color:var(--rd);border-color:var(--rd)}
-.btn.sm{padding:.25rem .6rem;font-size:.85rem}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--fond);color:var(--texte)}
+button{font:inherit;cursor:pointer;border:none;border-radius:8px;padding:10px 14px}
+input,select{font:inherit;width:100%;padding:10px;border:1px solid var(--bord);border-radius:8px;background:#fff}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
 .hidden{display:none!important}
-.demo-bar{background:var(--am2);color:#6b4710;font-size:.85rem;padding:.4rem 1rem;text-align:center}
-#login{min-height:calc(100vh - 34px);display:grid;grid-template-columns:1fr 1fr}
-.l-left{background:var(--g);color:#fff;padding:3rem;display:flex;flex-direction:column;justify-content:center}
-.l-left h1{font-size:2.6rem}
-.l-left p{max-width:36ch;font-size:1.1rem;opacity:.92}
-.l-right{display:flex;align-items:center;justify-content:center;padding:2rem}
-.box{width:100%;max-width:410px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1.6rem}
-label{display:block;font-weight:600;margin:.8rem 0 .25rem;font-size:.9rem}
-input,select{width:100%;padding:.55rem .65rem;border:1px solid #c5cfc6;border-radius:8px;background:#fff}
-.demo{background:var(--g2);border-radius:8px;padding:.7rem;font-size:.88rem;margin-top:1rem}
-.demo button{display:block;width:100%;text-align:left;background:none;border:0;padding:.3rem 0;cursor:pointer;color:var(--g);font-weight:600}
-.err{background:var(--rd2);color:var(--rd);padding:.55rem .7rem;border-radius:8px;margin-top:.8rem;font-size:.9rem}
-#app{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 34px)}
-aside{background:#14271d;color:#dfe9e2;padding:1rem;position:sticky;top:0;height:100vh}
-aside .logo{font:700 1.2rem Georgia,serif;color:#fff;margin-bottom:1.2rem}
-aside a{display:block;color:#cfe0d5;text-decoration:none;padding:.55rem .7rem;border-radius:8px;margin-bottom:2px}
-aside a.on,aside a:hover{background:#24402f;color:#fff}
-main{min-width:0}
-header{display:flex;gap:.8rem;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid var(--line);padding:.7rem 1.2rem;flex-wrap:wrap}
-.who{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
-.role{background:var(--g2);color:var(--g);border-radius:99px;padding:.15rem .7rem;font-weight:700;font-size:.82rem}
-#burger{display:none}
-#view{padding:1.2rem;max-width:1150px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.9rem;margin-bottom:1.2rem}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem}
-.stat b{display:block;font:700 1.7rem Georgia,serif}
-.stat span{color:var(--mute);font-size:.88rem}
-.bar{display:flex;align-items:center;gap:.6rem;margin:.45rem 0;font-size:.9rem}
-.bar i{display:block;height:12px;background:var(--g);border-radius:6px;min-width:3px}
-.bar span:first-child{width:140px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.evo{display:flex;align-items:flex-end;gap:.6rem;height:170px;padding-top:1.2rem}
-.evo div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.78rem;color:var(--mute);text-align:center}
-.evo i{display:block;width:100%;background:var(--g);border-radius:6px 6px 0 0;min-height:2px}
-.evo i.now{background:var(--am)}
-.tw{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:var(--r)}
-table{border-collapse:collapse;width:100%}
-th,td{padding:.6rem .75rem;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
-th{background:#f7f9f6;font-size:.85rem;color:var(--mute)}
-tr:last-child td{border-bottom:0}
-.badge{display:inline-block;padding:.1rem .6rem;border-radius:99px;font-size:.8rem;font-weight:700}
-.b-ok{background:var(--g2);color:var(--g)}.b-urg{background:var(--rd2);color:var(--rd)}.b-info{background:var(--bl2);color:var(--bl)}.b-fic{background:var(--am2);color:var(--am)}
-.bar-top{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-bottom:.9rem;flex-wrap:wrap}
-.empty{text-align:center;padding:2rem 1rem;color:var(--mute)}
-.note{background:var(--am2);color:#6b4710;border-radius:8px;padding:.6rem .8rem;font-size:.88rem;margin-bottom:1rem}
-dialog{border:0;border-radius:var(--r);padding:1.3rem;width:min(440px,94vw)}
-dialog::backdrop{background:rgba(0,0,0,.45)}
-.acts{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.1rem}
-#toast{position:fixed;bottom:1rem;right:1rem;z-index:99;display:grid;gap:.4rem}
-.t{background:var(--ink);color:#fff;padding:.6rem .9rem;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.t.e{background:var(--rd)}
-@media(max-width:800px){
-#login{grid-template-columns:1fr}.l-left{padding:1.6rem}.l-left h1{font-size:1.8rem}
-#app{grid-template-columns:1fr}
-aside{position:fixed;z-index:20;width:240px;left:-260px;transition:left .2s}
-aside.open{left:0}
-#burger{display:inline-block}
-}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.badge.ok{background:#dcfce7;color:#166534}
+.badge.warning{background:#fef3c7;color:#92400e}
+.badge.danger{background:#fee2e2;color:#991b1b}
+.badge.info{background:#dbeafe;color:#1e40af}
+.btn{background:var(--vert);color:#fff}
+.btn:hover{background:var(--vert-fonce)}
+.btn-secondary{background:#fff;color:var(--texte);border:1px solid var(--bord)}
+.btn-danger{background:var(--rouge);color:#fff}
+.btn-small{padding:6px 10px;font-size:13px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--carte);width:100%;max-width:430px;padding:28px;border-radius:16px;box-shadow:var(--ombre)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-dot{width:40px;height:40px;border-radius:10px;background:var(--vert);color:#fff;display:grid;place-items:center;font-weight:800}
+.demo{margin-top:16px;background:#f8fafc;border:1px dashed var(--bord);border-radius:10px;padding:12px;font-size:13px}
+.error-msg{margin-top:12px;background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;font-size:14px}
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:#0f172a;color:#e2e8f0;padding:18px;flex-shrink:0}
+.sidebar nav a{display:block;color:#cbd5e1;text-decoration:none;padding:10px 12px;border-radius:8px;margin-bottom:4px}
+.sidebar nav a.active,.sidebar nav a:hover{background:#1e293b;color:#fff}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{background:var(--carte);border-bottom:1px solid var(--bord);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.content{padding:20px;max-width:1200px;width:100%}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:20px}
+.card{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:16px;box-shadow:var(--ombre)}
+.card .value{font-size:26px;font-weight:800;margin-top:6px}
+.card .label{color:var(--gris);font-size:13px}
+.panel{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:var(--ombre)}
+.panel h2{margin:0 0 14px;font-size:18px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--bord);font-size:14px}
+th{background:#f8fafc;font-size:12px;text-transform:uppercase;color:var(--gris)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 14px}
+.empty{padding:24px;text-align:center;color:var(--gris);background:#f8fafc;border:1px dashed var(--bord);border-radius:10px}
+.toast{position:fixed;bottom:18px;right:18px;background:#0f172a;color:#fff;padding:12px 16px;border-radius:10px;z-index:50}
+.toast.success{background:var(--vert-fonce)}
+.toast.error{background:var(--rouge)}
+@media(max-width:820px){.app{flex-direction:column}.sidebar{width:100%;padding:12px}.sidebar nav{display:flex;overflow-x:auto;gap:6px}.sidebar nav a{white-space:nowrap}.content{padding:14px}}
 </style>
 </head>
 <body>
-<div class="demo-bar" id="demobar"></div>
-
-<section id="login">
-  <div class="l-left">
-    <h1>AntiGaspiPro</h1>
-    <p>Enregistrez ce qui est jeté, comprenez pourquoi, et réduisez le gaspillage de votre restaurant ou fast-food.</p>
+<div id="loginPage" class="login-wrap">
+ <div class="login-card">
+  <div class="logo"><div class="logo-dot">A</div><div><strong>AntiGaspiPro</strong><br><span style="font-size:12px;color:var(--gris)">Réduction du gaspillage pour restaurants et fast-foods</span></div></div>
+  <h1 style="font-size:22px;margin:18px 0 4px">Connexion de démonstration</h1>
+  <p style="color:var(--gris);font-size:14px;margin-top:0">Maquette fonctionnelle avec données fictives. Aucune véritable authentification n’est active.</p>
+  <form id="loginForm">
+   <label for="email">Adresse e-mail</label><input id="email" type="email" required placeholder="exemple@antigaspipro.fr">
+   <label for="password">Mot de passe</label><input id="password" type="password" required placeholder="demo123">
+   <button class="btn" type="submit" style="width:100%;margin-top:16px">Se connecter</button>
+  </form>
+  <div id="loginError" class="error-msg hidden"></div>
+  <div class="demo">
+   <strong>Comptes fictifs</strong><br>
+   Administrateur : admin@antigaspipro.fr<br>
+   Responsable de restaurant : responsable@antigaspipro.fr<br>
+   Employé : employe@antigaspipro.fr<br>
+   <strong>Mot de passe commun :</strong> <code>demo123</code><br><br>
+   Les données sont enregistrées uniquement dans ce navigateur avec localStorage.
   </div>
-  <div class="l-right">
-    <form class="box" id="lform" autocomplete="off">
-      <h2>Connexion</h2>
-      <label for="em">Adresse e-mail</label>
-      <input id="em" type="email" required placeholder="vous@exemple.fr">
-      <label for="pw">Mot de passe</label>
-      <input id="pw" type="password" required>
-      <div id="lerr" class="err hidden" role="alert"></div>
-      <button class="btn" style="width:100%;margin-top:1rem">Se connecter</button>
-      <div class="demo">
-        <b>Comptes de démonstration (fictifs)</b> – mot de passe commun : <code>Demo2026!</code>
-        <button type="button" data-u="admin@antigaspipro.fr">Administrateur de la plateforme</button>
-        <button type="button" data-u="responsable@antigaspipro.fr">Responsable de restaurant</button>
-        <button type="button" data-u="employe@antigaspipro.fr">Employé</button>
-      </div>
-    </form>
-  </div>
-</section>
-
-<div id="app" class="hidden">
-  <aside id="side"><div class="logo">AntiGaspiPro</div><nav id="nav"></nav></aside>
-  <main>
-    <header>
-      <div class="who"><button id="burger" class="btn sec sm" aria-label="Ouvrir le menu">☰ Menu</button><strong id="uname"></strong><span class="role" id="urole"></span><span id="urest" style="color:var(--mute)"></span></div>
-      <button class="btn sec sm" id="logout">Se déconnecter</button>
-    </header>
-    <div id="view"></div>
-  </main>
+ </div>
 </div>
 
-<dialog id="dlg"><form method="dialog" id="dform"></form></dialog>
-<div id="toast" aria-live="polite"></div>
+<div id="appPage" class="app hidden">
+ <aside class="sidebar">
+  <div class="logo" style="margin-bottom:20px"><div class="logo-dot">A</div><div><strong>AntiGaspiPro</strong><br><span id="sidebarRole" style="font-size:12px;color:#94a3b8"></span></div></div>
+  <nav id="sidebarNav"></nav>
+  <button id="resetDataBtn" class="btn-secondary btn-small" style="width:100%;margin-top:16px">Réinitialiser les données</button>
+ </aside>
+ <div class="main">
+  <header class="topbar">
+   <div><strong id="pageTitle">Tableau de bord</strong><div style="font-size:12px;color:var(--gris)" id="pageSubtitle">Données de démonstration</div></div>
+   <div style="display:flex;align-items:center;gap:10px"><span class="badge info" id="roleBadge"></span><button id="logoutBtn" class="btn-secondary btn-small">Déconnexion</button></div>
+  </header>
+  <main class="content" id="mainContent"></main>
+ </div>
+</div>
+<div id="toast" class="toast hidden"></div>
 
 <script>
-"use strict";
-/* ========= Configuration Supabase (non connecté) =========
-   Pour la suite : renseigner l'URL du projet et la clé « anon » (publique).
-   N'écrivez JAMAIS la clé « service_role » ni un mot de passe ici : ce fichier est public.
-   Le schéma de base de données est fourni dans supabase-schema.sql. */
-const CFG={supabaseUrl:"",supabaseAnonKey:""};
-const DEMO=!CFG.supabaseUrl;
-document.getElementById("demobar").textContent=DEMO
- ?"Mode démonstration : toutes les données sont fictives et stockées uniquement dans ce navigateur. Supabase n'est pas connecté."
- :"Supabase configuré (non vérifié).";
-
-/* ========= Données ========= */
-const KEY="antigaspipro_db_v2", SKEY="antigaspipro_session_v2", PASS="Demo2026!";
-const ROLES={admin:"Administrateur",responsable:"Responsable de restaurant",employe:"Employé"};
-const REASONS=["Date dépassée","Surproduction","Erreur de préparation","Produit abîmé","Retour client","Restes d'assiette","Chaîne du froid rompue"];
-const UNITS=["kg","L","pièce"];
-const UN={"pièce":{fam:"n",f:1},portion:{fam:"n",f:1},g:{fam:"m",f:.001},kg:{fam:"m",f:1},mL:{fam:"v",f:.001},L:{fam:"v",f:1}};
-const FAM={kg:"m",L:"v","pièce":"n"};
-const FAMU={m:["g","kg"],v:["mL","L"],n:["pièce","portion"],all:["pièce","portion","g","kg","mL","L"]};
-const DEF={m:"g",v:"mL",n:"pièce",all:"pièce"};
-const BASEU={m:"kg",v:"L",n:"pièce"};
-/* Produits types de fast-food (import optionnel dans le catalogue) : coûts d'achat FICTIFS par kg, L ou pièce */
-const FASTFOOD=[["Burger classique","n",1.8,"Plats préparés"],["Cheeseburger","n",1.6,"Plats préparés"],["Double burger","n",2.6,"Plats préparés"],["Burger poulet","n",1.9,"Plats préparés"],["Steak haché","m",11,"Viandes"],["Filet de poulet pané","m",8.5,"Viandes"],["Nuggets","m",7.5,"Viandes"],["Frites","m",2.2,"Épicerie"],["Pain burger","n",.35,"Boulangerie"],["Fromage en tranche","m",8,"Produits laitiers"],["Salade","m",4,"Fruits et légumes"],["Tomates","m",3.2,"Fruits et légumes"],["Oignons","m",1.5,"Fruits et légumes"],["Bacon","m",9,"Viandes"],["Sauce (ketchup, mayo…)","v",5,"Sauces et boissons"],["Boisson gazeuse","v",1.5,"Sauces et boissons"],["Milkshake","v",4,"Sauces et boissons"],["Glace","v",5,"Plats préparés"],["Café","v",3,"Sauces et boissons"],["Wrap","n",1.2,"Plats préparés"],["Sandwich","n",2,"Plats préparés"],["Kebab (viande)","m",9,"Viandes"],["Pizza","n",3,"Plats préparés"],["Cookie ou dessert","n",.9,"Boulangerie"]];
-const CATS=["Viandes","Poissons","Produits laitiers","Fruits et légumes","Épicerie","Boulangerie","Sauces et boissons","Plats préparés","Autre"];
-const NAV={
- admin:[["accueil","Vue d'ensemble"],["restaurants","Restaurants inscrits"]],
- responsable:[["accueil","Tableau de bord"],["gaspillages","Gaspillages"],["catalogue","Catalogue produits"],["achats","Achats et factures"],["restaurant","Mon restaurant"]],
- employe:[["saisie","Enregistrer un gaspillage"]]
+const STORAGE_KEY="antigaspipro_demo_v3";
+const DEMO_PASSWORD="demo123";
+const USERS=[
+ {id:"u1",email:"admin@antigaspipro.fr",nom:"Administrateur Plateforme",role:"admin"},
+ {id:"u2",email:"responsable@antigaspipro.fr",nom:"Karim Responsable",role:"responsable",restaurant:"r1"},
+ {id:"u3",email:"employe@antigaspipro.fr",nom:"Léa Employée",role:"employe",restaurant:"r1"}
+];
+const ROLE_LABELS={admin:"Administrateur",responsable:"Responsable de restaurant",employe:"Employé"};
+function dateDans(j){const d=new Date();d.setDate(d.getDate()+j);return d.toISOString().slice(0,10)}
+const DEFAULT_DATA={
+ restaurants:[
+  {id:"r1",nom:"Burger du Centre",ville:"Paris",type:"Fast-food",statut:"Actif",responsable:"Karim Responsable"},
+  {id:"r2",nom:"Le Petit Bistrot",ville:"Bobigny",type:"Restaurant",statut:"Actif",responsable:"Non assigné"},
+  {id:"r3",nom:"Pizza Express",ville:"Montreuil",type:"Fast-food",statut:"En attente",responsable:"Non assigné"}
+ ],
+ produits:[
+  {id:"p1",restaurant:"r1",nom:"Steaks hachés",categorie:"Viandes",quantite:18,unite:"unités",prixUnitaire:2.80,peremption:dateDans(2)},
+  {id:"p2",restaurant:"r1",nom:"Pains burger",categorie:"Boulangerie",quantite:40,unite:"pièces",prixUnitaire:0.65,peremption:dateDans(1)},
+  {id:"p3",restaurant:"r1",nom:"Salades composées",categorie:"Plats préparés",quantite:12,unite:"barquettes",prixUnitaire:3.20,peremption:dateDans(0)},
+  {id:"p4",restaurant:"r1",nom:"Frites surgelées",categorie:"Surgelés",quantite:25,unite:"kg",prixUnitaire:1.90,peremption:dateDans(30)},
+  {id:"p5",restaurant:"r2",nom:"Légumes frais",categorie:"Fruits et légumes",quantite:30,unite:"kg",prixUnitaire:1.40,peremption:dateDans(4)}
+ ],
+ gaspillages:[
+  {id:"g1",restaurant:"r1",produit:"Pains burger",quantite:6,unite:"pièces",motif:"Invendu en fin de service",date:dateDans(-1),coutEstime:3.90,employe:"Léa Employée"},
+  {id:"g2",restaurant:"r1",produit:"Salades composées",quantite:3,unite:"barquettes",motif:"Produit périmé",date:dateDans(-2),coutEstime:9.60,employe:"Léa Employée"},
+  {id:"g3",restaurant:"r1",produit:"Frites surgelées",quantite:2,unite:"kg",motif:"Erreur de préparation",date:dateDans(-4),coutEstime:3.80,employe:"Léa Employée"}
+ ],
+ factures:[]
 };
-const day=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-function seed(){
- let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
- const R=[{id:"r1",name:"Chez Karim",type:"Restaurant",city:"Saint-Denis",status:"Actif"},
-  {id:"r2",name:"Burger Express",type:"Fast-food",city:"Montreuil",status:"Actif"},
-  {id:"r3",name:"Pizza Vita",type:"Restaurant",city:"Lyon",status:"Suspendu"}];
- const U=[["admin@antigaspipro.fr","Admin plateforme","admin",""],["responsable@antigaspipro.fr","Karim Benali","responsable","r1"],
-  ["employe@antigaspipro.fr","Lina Moreau","employe","r1"],["resp.burger@antigaspipro.fr","Sophie Martin","responsable","r2"],
-  ["employe.burger@antigaspipro.fr","Tom Lefèvre","employe","r2"],["resp.pizza@antigaspipro.fr","Marco Rossi","responsable","r3"]]
-  .map(([email,name,role,restaurant])=>({email,name,role,restaurant}));
- const P=[["r1","Poulet fermier","Viandes","kg",9.5],["r1","Saumon frais","Poissons","kg",24],["r1","Tomates","Fruits et légumes","kg",3.2],
-  ["r1","Riz basmati","Épicerie","kg",2.4],["r1","Crème fraîche","Produits laitiers","L",4.8],["r1","Salade verte","Fruits et légumes","pièce",1.1],["r1","Pain du jour","Boulangerie","pièce",.5],
-  ["r2","Steak haché","Viandes","kg",11],["r2","Pains burger","Boulangerie","pièce",.35],["r2","Frites surgelées","Épicerie","kg",2.2],
-  ["r2","Fromage tranché","Produits laitiers","kg",8],["r2","Salade","Fruits et légumes","kg",4],["r2","Sauce maison","Sauces et boissons","L",5]]
-  .map(([restaurant,name,cat,unit,price])=>({id:uid(),restaurant,name,cat,unit,price}));
- const W=[];
- for(let i=0;i<48;i++){
-  const r=rnd()<.6?"r1":"r2",pl=P.filter(p=>p.restaurant===r),p=pl[Math.floor(rnd()*pl.length)];
-  const qty=p.unit==="pièce"?Math.round(2+rnd()*14):Math.round((.5+rnd()*4)*2)/2;
-  W.push({id:uid(),restaurant:r,product:p.name,unit:p.unit,qty,cost:+(qty*p.price).toFixed(2),
-   reason:REASONS[Math.floor(rnd()*REASONS.length)],date:day(-Math.floor(rnd()*42)),by:r==="r1"?"employe@antigaspipro.fr":"employe.burger@antigaspipro.fr"});
- }
- const A=[["Poulet fermier",20,"kg",190,9.5],["Tomates",15,"kg",48,3.2]].map(([product,qty,unit,total,unitPrice],i)=>({id:uid(),restaurant:"r1",date:day(-5-i),supplier:"Grossiste Démo (fictif)",product,qty,unit,total,unitPrice,baseUnit:unit}));
- return{restaurants:R,users:U,products:P,wastes:W,purchases:A};
+let state,currentUser=null,currentPage="dashboard";
+function charger(){
+ const brut=localStorage.getItem(STORAGE_KEY);
+ if(!brut){state=JSON.parse(JSON.stringify(DEFAULT_DATA));sauver();return}
+ try{state=JSON.parse(brut);state.restaurants||=[];state.produits||=[];state.gaspillages||=[];state.factures||=[]}
+ catch(e){state=JSON.parse(JSON.stringify(DEFAULT_DATA));sauver()}
 }
-/* Couche de stockage : c'est la seule partie à remplacer par Supabase plus tard. */
-let db;
-function load(){try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){db=null}if(!db||!db.users){db=seed();save()}db.purchases=db.purchases||[]}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Enregistrement impossible dans ce navigateur.",1)}}
+function sauver(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function uid(p){return p+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(t){return String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function formatDate(iso){return iso?new Date(iso+"T00:00:00").toLocaleDateString("fr-FR"):"—"}
+function toast(msg,type="success"){const el=document.getElementById("toast");el.textContent=msg;el.className="toast "+type;setTimeout(()=>el.classList.add("hidden"),3200)}
 
-/* ========= Utilitaires ========= */
-const $=s=>document.querySelector(s);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const eur=n=>Number(n||0).toLocaleString("fr-FR",{style:"currency",currency:"EUR"});
-const pfmt=x=>Number(x).toLocaleString("fr-FR",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:4});
-const num=n=>Number(n||0).toLocaleString("fr-FR",{maximumFractionDigits:2});
-const fdate=d=>d?new Date(d+"T00:00").toLocaleDateString("fr-FR"):"";
-const ago=d=>Math.round((new Date(new Date().toISOString().slice(0,10)+"T00:00")-new Date(d+"T00:00"))/864e5);
-const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
-const group=(a,kf,vf)=>a.reduce((m,x)=>(m[kf(x)]=(m[kf(x)]||0)+vf(x),m),{});
-const rest=id=>db.restaurants.find(r=>r.id===id)||{name:"(supprimé)"};
-const uname=e=>(db.users.find(u=>u.email===e)||{}).name||e;
-const mineW=()=>db.wastes.filter(w=>w.restaurant===me.restaurant);
-const last30=a=>a.filter(w=>ago(w.date)<30);
-function toast(m,err){const t=document.createElement("div");t.className="t"+(err?" e":"");t.textContent=m;$("#toast").append(t);setTimeout(()=>t.remove(),3200)}
-let me=null;
-
-/* ========= Fenêtres ========= */
-function openForm(title,fields,vals,onSave){
- const f=$("#dform");
- f.innerHTML=`<h2>${esc(title)}</h2>`+fields.map(x=>{
-  const v=vals[x.k]??"";
-  const inp=x.opts?`<select id="f_${x.k}">${x.opts.map(o=>`<option ${String(o)===String(v)?"selected":""}>${esc(o)}</option>`).join("")}</select>`
-   :`<input id="f_${x.k}" type="${x.t||"text"}" ${x.t==="number"?'step="any" min="0"':""} ${x.max?`max="${x.max}"`:""} value="${esc(v)}" required>`;
-  return`<label for="f_${x.k}">${esc(x.l)}</label>${inp}`}).join("")+
-  `<div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
- $("#fc").onclick=()=>$("#dlg").close();
- f.onsubmit=e=>{e.preventDefault();const o={};
-  for(const x of fields){let v=$("#f_"+x.k).value.trim();if(x.t==="number")v=parseFloat(v);o[x.k]=v}
-  for(const x of fields)if(x.t==="number"&&(isNaN(o[x.k])||o[x.k]<0||(x.pos&&o[x.k]===0))){toast(`« ${x.l} » doit être un nombre ${x.pos?"supérieur à 0":"positif"}.`,1);return}
-  onSave(o);$("#dlg").close()};
- $("#dlg").showModal();
-}
-function confirmBox(title,msg,label,fn){
- const f=$("#dform");f.onsubmit=e=>e.preventDefault();
- f.innerHTML=`<h2>${esc(title)}</h2><p>${esc(msg)}</p><div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button type="button" class="btn danger" id="fy">${esc(label)}</button></div>`;
- $("#fc").onclick=()=>$("#dlg").close();$("#fy").onclick=()=>{fn();$("#dlg").close()};$("#dlg").showModal();
-}
-
-/* ========= Connexion (démonstration uniquement) ========= */
-function login(email,pw){
- const u=db.users.find(x=>x.email===email.toLowerCase().trim());
- if(!u)return"Aucun compte ne correspond à cette adresse. Utilisez l'un des comptes de démonstration.";
- if(pw!==PASS)return"Mot de passe incorrect. Le mot de passe de démonstration est affiché sous le formulaire.";
- if(u.role!=="admin"&&rest(u.restaurant).status==="Suspendu")return"Ce restaurant est suspendu par l'administrateur de la plateforme.";
- localStorage.setItem(SKEY,u.email);return null}
-$("#lform").onsubmit=e=>{e.preventDefault();const r=login($("#em").value,$("#pw").value);
- if(r){$("#lerr").textContent=r;$("#lerr").classList.remove("hidden")}else{location.hash="";boot()}};
-document.querySelectorAll(".demo button").forEach(b=>b.onclick=()=>{$("#em").value=b.dataset.u;$("#pw").value=PASS;$("#lform").requestSubmit()});
-$("#logout").onclick=()=>{localStorage.removeItem(SKEY);me=null;location.hash="";boot();toast("Vous êtes déconnecté.")};
-$("#burger").onclick=()=>$("#side").classList.toggle("open");
-
-function boot(){
- load();
- me=db.users.find(u=>u.email===localStorage.getItem(SKEY))||null;
- $("#login").classList.toggle("hidden",!!me);$("#app").classList.toggle("hidden",!me);
- if(!me)return;
- $("#uname").textContent=me.name;$("#urole").textContent=ROLES[me.role];
- $("#urest").textContent=me.role==="admin"?"":rest(me.restaurant).name;
- $("#nav").innerHTML=NAV[me.role].map(([p,l])=>`<a href="#/${p}" data-p="${p}">${l}</a>`).join("")+
-  `<a href="#" id="reset" style="margin-top:1.2rem;color:#f0b4ab">Réinitialiser les données</a>`;
- $("#reset").onclick=ev=>{ev.preventDefault();confirmBox("Réinitialiser les données","Toutes vos modifications seront remplacées par les données de démonstration d'origine.","Réinitialiser",()=>{db=seed();save();route();toast("Données de démonstration réinitialisées.")})};
- route();
-}
-
-/* ========= Routage avec contrôle de rôle (démonstration, côté navigateur) ========= */
-const PAGES={admin:{},responsable:{},employe:{}},WIRE={};
-function route(){
- if(!me)return;
- let p=location.hash.replace("#/","");
- const allowed=NAV[me.role].map(x=>x[0]);
- if(!allowed.includes(p)){p=allowed[0];history.replaceState(null,"","#/"+p)}
- document.querySelectorAll("#nav a[data-p]").forEach(a=>a.classList.toggle("on",a.dataset.p===p));
- $("#side").classList.remove("open");
- $("#view").innerHTML=PAGES[me.role][p]();
- const w=WIRE[me.role+"."+p];if(w)w();
-}
-window.addEventListener("hashchange",route);
-
-/* ========= Éléments communs ========= */
-const stat=(v,l)=>`<div class="card stat"><b>${v}</b><span>${l}</span></div>`;
-const empty=t=>`<div class="card empty">${t}</div>`;
-function bars(map,fmt){const e=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,7);if(!e.length)return'<div class="empty">Aucune donnée pour le moment.</div>';
- const m=e[0][1]||1;return e.map(([k,v])=>`<div class="bar"><span title="${esc(k)}">${esc(k)}</span><i style="width:${Math.max(3,v/m*55)}%"></i><span>${(fmt||eur)(v)}</span></div>`).join("")}
-function evo(W){const b=[0,0,0,0,0,0];W.forEach(w=>{const k=Math.floor(ago(w.date)/7);if(k>=0&&k<6)b[k]+=w.cost});
- const m=Math.max(...b,1);
- return`<div class="evo">`+[5,4,3,2,1,0].map(k=>`<div><span>${b[k]?eur(b[k]):""}</span><i class="${k?"":"now"}" style="height:${b[k]/m*100*.8}%"></i>${k?`il y a ${k} sem.`:"cette sem."}</div>`).join("")+`</div>`}
-function variation(W){const c=sum(W.filter(w=>ago(w.date)<7),w=>w.cost),p=sum(W.filter(w=>ago(w.date)>=7&&ago(w.date)<14),w=>w.cost);
- if(!p)return c?"nouveau":"–";const v=(c-p)/p*100;return(v>0?"+":"")+num(v)+" %"}
-const baseQty=(W,fam)=>sum(W.filter(w=>(UN[w.unit]||{}).fam===fam),w=>w.qty*UN[w.unit].f);
-const qtyStats=W=>stat(num(baseQty(W,"m"))+" kg","d'aliments solides jetés (30 jours)")+stat(num(baseQty(W,"v"))+" L","de liquides jetés (30 jours)")+stat(num(baseQty(W,"n"))+" pièces","ou portions jetées (30 jours)");
-function wasteTable(list,opts={}){
- if(!list.length)return empty("Aucun gaspillage enregistré. Utilisez « Enregistrer un gaspillage » dès qu'un produit est jeté.");
- return`<div class="tw"><table><thead><tr><th>Date</th>${opts.rest?"<th>Restaurant</th>":""}<th>Produit</th><th>Quantité</th><th>Raison</th><th>Coût estimé</th><th>Saisi par</th>${opts.del?"<th>Action</th>":""}</tr></thead><tbody>`+
- list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(w=>`<tr><td>${fdate(w.date)}</td>${opts.rest?`<td>${esc(rest(w.restaurant).name)}</td>`:""}<td><b>${esc(w.product)}</b></td><td>${num(w.qty)} ${esc(w.unit)}</td><td>${esc(w.reason)}</td><td>${eur(w.cost)}</td><td>${esc(uname(w.by))}</td>${opts.del?`<td><button class="btn danger sm" data-delw="${w.id}">Supprimer</button></td>`:""}</tr>`).join("")+"</tbody></table></div>"}
-function addWaste(){
- const P=db.products.filter(p=>p.restaurant===me.restaurant);
- if(!P.length){toast(me.role==="employe"?"Le catalogue de votre restaurant est vide : demandez à votre responsable d'ajouter des produits.":"Le catalogue est vide : ajoutez des produits ou enregistrez un achat avant de saisir un gaspillage.",1);return}
- const f=$("#dform");
- f.innerHTML=`<h2>Enregistrer un gaspillage</h2>
- <label for="w_p">Produit du catalogue</label>
- <select id="w_p">${P.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</select>
- <label for="w_q">Quantité jetée</label>
- <div style="display:flex;gap:.5rem"><input id="w_q" type="number" min="0" step="any" inputmode="decimal" style="flex:1"><select id="w_u" style="flex:1" aria-label="Unité"></select></div>
- <label for="w_pr">Prix unitaire (par <span id="w_ul"></span>)</label>
- <input id="w_pr" readonly>
- <small style="color:var(--mute)">Prix issu du catalogue de votre restaurant.</small>
- <p id="w_c" style="font-weight:700;margin:.6rem 0 0"></p>
- <label for="w_r">Raison</label><select id="w_r">${REASONS.map(r=>`<option>${esc(r)}</option>`).join("")}</select>
- <label for="w_d">Date</label><input id="w_d" type="date" max="${day(0)}" value="${day(0)}" required>
- <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
- const cur=()=>P.find(x=>x.id===$("#w_p").value),curPrice=()=>cur().price*UN[$("#w_u").value].f;
- function cost(){const q=parseFloat($("#w_q").value);$("#w_c").textContent=q>0?"Coût estimé : "+eur(q*curPrice()):"Coût estimé : –"}
- function price(){$("#w_ul").textContent=$("#w_u").value;$("#w_pr").value=pfmt(curPrice());cost()}
- function units(){const fam=FAM[cur().unit]||"n";$("#w_u").innerHTML=FAMU[fam].map(u=>`<option ${u===DEF[fam]?"selected":""}>${u}</option>`).join("");price()}
- $("#w_p").onchange=units;$("#w_u").onchange=price;$("#w_q").oninput=cost;
- $("#fc").onclick=()=>$("#dlg").close();
- f.onsubmit=e=>{e.preventDefault();
-  const p=cur(),q=parseFloat($("#w_q").value),u=$("#w_u").value,d=$("#w_d").value;
-  if(!(q>0)){toast("La quantité doit être supérieure à 0.",1);return}
-  if(!d||d>day(0)){toast("La date ne peut pas être dans le futur.",1);return}
-  db.wastes.push({id:uid(),restaurant:me.restaurant,product:p.name,unit:u,qty:q,cost:+(q*curPrice()).toFixed(2),reason:$("#w_r").value,date:d,by:me.email});
-  save();$("#dlg").close();route();toast(`Gaspillage enregistré : ${num(q)} ${u} de ${p.name}.`)};
- units();$("#dlg").showModal();
-}
-function wireDelW(){document.querySelectorAll("[data-delw]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cette saisie","Cette ligne sera retirée des statistiques.","Supprimer",()=>{db.wastes=db.wastes.filter(w=>w.id!==b.dataset.delw);save();route();toast("Saisie supprimée.")}))}
-
-/* ========= Administrateur ========= */
-PAGES.admin.accueil=()=>{const W=db.wastes,W30=last30(W),R=db.restaurants;
- return`<h1>Vue d'ensemble de la plateforme</h1><div class="note">Données entièrement fictives (démonstration).</div>
- <div class="grid">${stat(R.length,"restaurants inscrits")}${stat(R.filter(r=>r.status==="Actif").length,"restaurants actifs")}${stat(eur(sum(W30,w=>w.cost)),"coût du gaspillage (30 jours)")}${stat(W30.length,"saisies (30 jours)")}</div>
- <div class="card"><h2>Évolution du coût du gaspillage (toute la plateforme)</h2>${evo(W)}</div><br>
- <div class="card"><h2>Coût sur 30 jours par restaurant</h2>${bars(group(W30,w=>rest(w.restaurant).name,w=>w.cost))}</div>`};
-const restFields=[{k:"name",l:"Nom de l'établissement"},{k:"type",l:"Type",opts:["Restaurant","Fast-food"]},{k:"city",l:"Ville"}];
-PAGES.admin.restaurants=()=>`<div class="bar-top"><h1>Restaurants inscrits</h1><button class="btn" id="addr">Ajouter un restaurant</button></div>
- <div class="tw"><table><thead><tr><th>Établissement</th><th>Type</th><th>Ville</th><th>Responsable</th><th>Statut</th><th>Coût 30 j</th><th>Actions</th></tr></thead><tbody>`+
- db.restaurants.map(r=>{const m=db.users.find(u=>u.restaurant===r.id&&u.role==="responsable");
-  return`<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.type)}</td><td>${esc(r.city)}</td><td>${m?esc(m.name):"–"}</td><td><span class="badge ${r.status==="Actif"?"b-ok":"b-urg"}">${r.status}</span></td><td>${eur(sum(last30(db.wastes.filter(w=>w.restaurant===r.id)),w=>w.cost))}</td>
-  <td><button class="btn sec sm" data-edit="${r.id}">Modifier</button> <button class="btn sec sm" data-tog="${r.id}">${r.status==="Actif"?"Suspendre":"Réactiver"}</button> <button class="btn danger sm" data-del="${r.id}">Supprimer</button></td></tr>`}).join("")+`</tbody></table></div>`;
-WIRE["admin.restaurants"]=()=>{
- $("#addr").onclick=()=>openForm("Ajouter un restaurant",[...restFields,{k:"mname",l:"Nom du responsable"},{k:"memail",l:"E-mail du responsable",t:"email"}],{type:"Restaurant"},o=>{
-  const email=o.memail.toLowerCase();if(db.users.some(u=>u.email===email)){toast("Cette adresse e-mail existe déjà.",1);return}
-  const id="r"+uid();db.restaurants.push({id,name:o.name,type:o.type,city:o.city,status:"Actif"});
-  db.users.push({email,name:o.mname,role:"responsable",restaurant:id});save();route();toast("Restaurant ajouté (démonstration : aucun e-mail envoyé).")});
- document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.edit);
-  openForm("Modifier le restaurant",restFields,r,o=>{Object.assign(r,o);save();route();toast("Restaurant modifié.")})});
- document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.tog);
-  r.status=r.status==="Actif"?"Suspendu":"Actif";save();route();toast(`${r.name} : ${r.status==="Actif"?"réactivé":"suspendu"}.`)});
- document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce restaurant","Son catalogue, son équipe et tous ses gaspillages seront aussi supprimés.","Supprimer",()=>{
-  const id=b.dataset.del;db.restaurants=db.restaurants.filter(r=>r.id!==id);db.products=db.products.filter(p=>p.restaurant!==id);
-  db.wastes=db.wastes.filter(w=>w.restaurant!==id);db.purchases=db.purchases.filter(a=>a.restaurant!==id);db.users=db.users.filter(u=>u.restaurant!==id);save();route();toast("Restaurant supprimé.")}))};
-
-/* ========= Responsable de restaurant ========= */
-PAGES.responsable.accueil=()=>{const W=mineW(),W30=last30(W),v=variation(W);
- return`<h1>Tableau de bord – ${esc(rest(me.restaurant).name)}</h1><div class="note">Données de démonstration fictives.</div>
- <div class="grid">${stat(eur(sum(W30,w=>w.cost)),"coût estimé du gaspillage (30 jours)")}${qtyStats(W30)}${stat(v,"évolution du coût, 7 derniers jours")}</div>
- <div class="card"><h2>Évolution hebdomadaire du coût</h2>${evo(W)}</div><br>
- <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"><div class="card"><h2>Coût par raison</h2>${bars(group(W30,w=>w.reason,w=>w.cost))}</div>
- <div class="card"><h2>Produits les plus gaspillés</h2>${bars(group(W30,w=>w.product,w=>w.cost))}</div></div>`};
-PAGES.responsable.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages</h1><button class="btn" id="addw">Enregistrer un gaspillage</button></div>`+wasteTable(mineW(),{del:1});
-WIRE["responsable.gaspillages"]=()=>{$("#addw").onclick=addWaste;wireDelW()};
-const prodFields=[{k:"name",l:"Nom du produit"},{k:"cat",l:"Catégorie",opts:CATS},{k:"unit",l:"Unité",opts:UNITS},{k:"price",l:"Coût d'achat par unité (€)",t:"number",pos:1}];
-PAGES.responsable.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
- return`<div class="bar-top"><h1>Catalogue produits</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="addstd">Importer les produits types</button><button class="btn" id="addp">Ajouter un produit</button></div></div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Unité</th><th>Coût unitaire</th><th>Actions</th></tr></thead><tbody>`+
- P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${esc(p.unit)}</td><td>${pfmt(p.price)} / ${esc(p.unit)}</td><td><button class="btn sec sm" data-edit="${p.id}">Modifier</button> <button class="btn danger sm" data-del="${p.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide. Ajoutez vos produits, importez les produits types de fast-food ou enregistrez un achat : vos employés ne peuvent déclarer que les produits de ce catalogue."))};
-WIRE["responsable.catalogue"]=()=>{
- $("#addstd").onclick=()=>confirmBox("Importer les produits types","Les produits types de fast-food (burgers, frites, sauces…) sont ajoutés à votre catalogue avec des prix d'achat fictifs. Vos produits existants ne sont pas modifiés. Enregistrez ensuite vos achats pour obtenir vos vrais prix.","Importer",()=>{
-  const have=new Set(db.products.filter(p=>p.restaurant===me.restaurant).map(p=>p.name.toLowerCase()));let n=0;
-  FASTFOOD.forEach(([name,fam,price,cat])=>{if(!have.has(name.toLowerCase())){db.products.push({id:uid(),restaurant:me.restaurant,name,cat,unit:BASEU[fam],price});n++}});
-  save();route();toast(n+" produit(s) ajouté(s) au catalogue.")});
- $("#addp").onclick=()=>openForm("Ajouter un produit",prodFields,{cat:CATS[0],unit:"kg"},o=>{
-  if(db.products.some(p=>p.restaurant===me.restaurant&&p.name.toLowerCase()===o.name.toLowerCase())){toast("Ce produit existe déjà dans le catalogue.",1);return}
-  o.id=uid();o.restaurant=me.restaurant;db.products.push(o);save();route();toast("Produit ajouté au catalogue.")});
- document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const p=db.products.find(x=>x.id===b.dataset.edit);
-  openForm("Modifier le produit",prodFields,p,o=>{Object.assign(p,o);save();route();toast("Produit modifié.")})});
- document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce produit","Les gaspillages déjà enregistrés sont conservés.","Supprimer",()=>{db.products=db.products.filter(x=>x.id!==b.dataset.del);save();route();toast("Produit supprimé.")}))};
-PAGES.responsable.restaurant=()=>{const r=rest(me.restaurant),T=db.users.filter(u=>u.restaurant===me.restaurant&&u.role==="employe");
- return`<h1>Mon restaurant</h1><div class="card" style="margin-bottom:1.2rem"><div class="bar-top" style="margin:0"><div><h2 style="margin:0">${esc(r.name)}</h2><span style="color:var(--mute)">${esc(r.type)} – ${esc(r.city)}</span></div><button class="btn sec" id="editr">Modifier</button></div></div>
- <div class="bar-top"><h2 style="margin:0">Équipe</h2><button class="btn" id="addt">Ajouter un employé</button></div>`+
- (T.length?`<div class="tw"><table><thead><tr><th>Nom</th><th>E-mail</th><th>Action</th></tr></thead><tbody>`+T.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.email)}</td><td><button class="btn danger sm" data-delu="${esc(u.email)}">Retirer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun employé. Ajoutez votre équipe pour qu'elle enregistre les gaspillages."))};
-WIRE["responsable.restaurant"]=()=>{
- $("#editr").onclick=()=>{const r=rest(me.restaurant);openForm("Modifier mon restaurant",restFields,r,o=>{Object.assign(r,o);save();boot();toast("Informations enregistrées.")})};
- $("#addt").onclick=()=>openForm("Ajouter un employé",[{k:"name",l:"Nom"},{k:"email",l:"E-mail",t:"email"}],{},o=>{
-  o.email=o.email.toLowerCase();if(db.users.some(u=>u.email===o.email)){toast("Cette adresse e-mail existe déjà.",1);return}
-  db.users.push({email:o.email,name:o.name,role:"employe",restaurant:me.restaurant});save();route();toast("Employé ajouté (démonstration : aucun e-mail envoyé).")});
- document.querySelectorAll("[data-delu]").forEach(b=>b.onclick=()=>confirmBox("Retirer cet employé","Ses saisies passées sont conservées.","Retirer",()=>{db.users=db.users.filter(u=>u.email!==b.dataset.delu);save();route();toast("Employé retiré.")}))};
-
-/* ========= Achats et factures (responsable) ========= */
-const UALIAS={piece:"pièce",pieces:"pièce",pcs:"pièce",pc:"pièce",u:"pièce",unite:"pièce",unites:"pièce",portion:"portion",portions:"portion",g:"g",gr:"g",gramme:"g",grammes:"g",kg:"kg",kilo:"kg",kilos:"kg",ml:"mL",l:"L",litre:"L",litres:"L"};
-const normUnit=s=>UALIAS[(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()]||s;
-function infoBox(title,html){const f=$("#dform");f.onsubmit=e=>e.preventDefault();
- f.innerHTML=`<h2>${esc(title)}</h2>${html}<div class="acts"><button type="button" class="btn" id="fc">Fermer</button></div>`;$("#fc").onclick=()=>$("#dlg").close();$("#dlg").showModal()}
-function addPurchase(l){
- l.product=(l.product||"").trim();
- if(!l.product)return"Indiquez le produit.";
- if(!UN[l.unit])return`Unité inconnue « ${l.unit} ».`;
- if(!(l.qty>0))return"La quantité doit être supérieure à 0.";
- if(!(l.total>0))return"Le total payé doit être supérieur à 0.";
- if(!l.date||l.date>day(0))return"La date est invalide ou dans le futur.";
- const fam=UN[l.unit].fam,up=+(l.total/(l.qty*UN[l.unit].f)).toFixed(4);
- const p=db.products.find(x=>x.restaurant===me.restaurant&&x.name.toLowerCase()===l.product.toLowerCase());
- if(p){if(FAM[p.unit]!==fam)return`« ${p.name} » est géré en ${p.unit} dans le catalogue : utilisez une unité compatible.`;p.price=up}
- else db.products.push({id:uid(),restaurant:me.restaurant,name:l.product,cat:CATS.includes(l.cat)?l.cat:"Autre",unit:BASEU[fam],price:up});
- db.purchases.push({id:uid(),restaurant:me.restaurant,date:l.date,supplier:l.supplier||"",product:p?p.name:l.product,qty:l.qty,unit:l.unit,total:l.total,unitPrice:up,baseUnit:BASEU[fam]});
- return null}
-PAGES.responsable.achats=()=>{const A=db.purchases.filter(a=>a.restaurant===me.restaurant);
- return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
- <input type="file" id="csvf" accept=".csv,.txt,text/csv" class="hidden">
- <div class="note">Le prix unitaire est calculé automatiquement (total payé ÷ quantité) et met à jour le catalogue, donc le coût des gaspillages. Les factures PDF ou photos ne sont pas lues automatiquement dans cette version : la lecture automatique demande un service côté serveur, prévu avec Supabase. En attendant, saisissez les lignes ou importez un fichier CSV. Pour fixer un prix à la main, modifiez le produit dans le catalogue.</div>`+
- (A.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Fournisseur</th><th>Produit</th><th>Quantité</th><th>Total payé</th><th>Prix unitaire calculé</th><th>Action</th></tr></thead><tbody>`+
- A.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr><td>${fdate(a.date)}</td><td>${esc(a.supplier||"–")}</td><td><b>${esc(a.product)}</b></td><td>${num(a.qty)} ${esc(a.unit)}</td><td>${eur(a.total)}</td><td>${pfmt(a.unitPrice)} / ${esc(a.baseUnit)}</td><td><button class="btn danger sm" data-dela="${a.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun achat enregistré. Ajoutez une facture ligne par ligne ou importez un fichier CSV."))};
-function addPurchaseForm(){
- const P=db.products.filter(p=>p.restaurant===me.restaurant),f=$("#dform");
- f.innerHTML=`<h2>Ajouter un achat</h2>
- <label for="a_d">Date de la facture</label><input id="a_d" type="date" max="${day(0)}" value="${day(0)}" required>
- <label for="a_s">Fournisseur (facultatif)</label><input id="a_s" maxlength="60">
- <label for="a_p">Produit</label><input id="a_p" list="a_dl" maxlength="60" autocomplete="off" placeholder="Choisissez ou tapez un nouveau produit"><datalist id="a_dl">${P.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
- <label for="a_c">Catégorie (pour un nouveau produit)</label><select id="a_c">${CATS.map(c=>`<option>${esc(c)}</option>`).join("")}</select>
- <label for="a_q">Quantité achetée</label><div style="display:flex;gap:.5rem"><input id="a_q" type="number" min="0" step="any" inputmode="decimal" style="flex:1"><select id="a_u" style="flex:1" aria-label="Unité">${Object.keys(UN).map(u=>`<option ${u==="kg"?"selected":""}>${u}</option>`).join("")}</select></div>
- <label for="a_t">Total payé (€)</label><input id="a_t" type="number" min="0" step="any" inputmode="decimal">
- <p id="a_r" style="font-weight:700;margin:.6rem 0 0"></p>
- <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
- function calc(){const q=parseFloat($("#a_q").value),t=parseFloat($("#a_t").value),u=$("#a_u").value;
-  $("#a_r").textContent=(q>0&&t>0)?`Prix unitaire calculé : ${pfmt(t/(q*UN[u].f))} par ${BASEU[UN[u].fam]}`+(UN[u].f!==1?` (soit ${pfmt(t/q)} par ${u})`:""):"Prix unitaire calculé : –"}
- $("#a_p").oninput=()=>{const p=P.find(x=>x.name.toLowerCase()===$("#a_p").value.trim().toLowerCase());
-  if(p&&FAM[p.unit]!==UN[$("#a_u").value].fam)$("#a_u").value=p.unit;calc()};
- ["a_q","a_t"].forEach(i=>$("#"+i).oninput=calc);$("#a_u").onchange=calc;
- $("#fc").onclick=()=>$("#dlg").close();
- f.onsubmit=e=>{e.preventDefault();
-  const err=addPurchase({date:$("#a_d").value,supplier:$("#a_s").value.trim(),product:$("#a_p").value,cat:$("#a_c").value,qty:parseFloat($("#a_q").value),unit:$("#a_u").value,total:parseFloat($("#a_t").value)});
-  if(err){toast(err,1);return}
-  const a=db.purchases[db.purchases.length-1];save();$("#dlg").close();route();toast(`Achat enregistré : ${pfmt(a.unitPrice)} par ${a.baseUnit}, catalogue mis à jour.`)};
- $("#dlg").showModal();
-}
-function parseCSV(text){
- const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).map((l,i)=>({l,n:i+1})).filter(x=>x.l.trim());
- if(lines.length<2)return{err:"Le fichier doit contenir une ligne d'en-têtes et au moins une ligne de données."};
- const d=lines[0].l.split(";").length>=lines[0].l.split(",").length?";":",";
- const split=s=>{const o=[];let c="",q=false;for(const ch of s){if(ch==='"')q=!q;else if(ch===d&&!q){o.push(c);c=""}else c+=ch}o.push(c);return o.map(x=>x.trim())};
- const H=split(lines[0].l).map(s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,""));
- const ix=(...k)=>H.findIndex(h=>k.includes(h));
- const c={date:ix("date"),sup:ix("fournisseur"),prod:ix("produit","article","designation"),qty:ix("quantite","qte"),unit:ix("unite"),tot:ix("total","totalpaye","montant","totalht","prixtotal"),cat:ix("categorie")};
- if(c.prod<0||c.qty<0||c.unit<0||c.tot<0)return{err:"Colonnes obligatoires manquantes : produit, quantite, unite, total."};
- const nb=s=>{s=String(s||"").replace(/[€\s]/g,"");if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");return parseFloat(s)};
- const dt=s=>{s=(s||"").trim();if(!s)return day(0);let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return s;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`:"invalide"};
- return{rows:lines.slice(1).map(x=>{const r=split(x.l),g=i=>i<0?"":(r[i]||"");
-  return{n:x.n,line:{date:dt(g(c.date)),supplier:g(c.sup),product:g(c.prod),cat:g(c.cat),qty:nb(g(c.qty)),unit:normUnit(g(c.unit)),total:nb(g(c.tot))}}})};
-}
-function importCSV(text){
- const res=parseCSV(text);if(res.err){infoBox("Import impossible",`<p>${esc(res.err)}</p>`);return}
- let ok=0;const errs=[];
- res.rows.forEach(r=>{const e=addPurchase(r.line);if(e)errs.push(`Ligne ${r.n} : ${e}`);else ok++});
- if(ok)save();route();
- infoBox("Import terminé",`<p><b>${ok}</b> ligne(s) importée(s), <b>${errs.length}</b> ignorée(s).</p>`+(errs.length?`<ul>${errs.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${errs.length>8?`<p>… et ${errs.length-8} autre(s).</p>`:""}`:"")+(ok?"<p>Les prix unitaires sont calculés et le catalogue est à jour.</p>":""))}
-WIRE["responsable.achats"]=()=>{
- $("#adda").onclick=addPurchaseForm;
- $("#csvm").onclick=()=>{const t="\uFEFFdate;fournisseur;produit;quantite;unite;total;categorie\n"+day(0)+";Grossiste Démo;Steak haché;10;kg;110;Viandes\n"+day(0)+";Grossiste Démo;Pains burger;200;pièce;70;Boulangerie\n";
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download="modele-achats.csv";a.click()};
- $("#csvi").onclick=()=>$("#csvf").click();
- $("#csvf").onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>1e6){toast("Fichier trop volumineux (1 Mo maximum).",1);return}
-  const r=new FileReader();r.onload=()=>importCSV(String(r.result));r.readAsText(file,"utf-8")};
- document.querySelectorAll("[data-dela]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cet achat","La ligne est retirée de l'historique ; le prix du catalogue n'est pas modifié.","Supprimer",()=>{db.purchases=db.purchases.filter(a=>a.id!==b.dataset.dela);save();route();toast("Achat supprimé.")}))};
-
-/* ========= Employé ========= */
-PAGES.employe.saisie=()=>{const W=mineW().filter(w=>w.by===me.email);
- return`<div class="bar-top"><h1>Enregistrer un gaspillage</h1><button class="btn" id="addw">Nouvelle saisie</button></div>
- <div class="grid">${stat(W.filter(w=>ago(w.date)===0).length,"saisies aujourd'hui")}${stat(W.length,"saisies au total")}</div>
- <h2>Mes dernières saisies</h2>`+wasteTable(W.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15))};
-WIRE["employe.saisie"]=()=>{$("#addw").onclick=addWaste};
-
-boot();
-</script>
-</body>
-</html>
+document.getElementById("loginForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ const email=document.getElementById("email").value.trim().toLowerCase();
+ const mdp=document.getElementById("password").value;
+ const user=USERS.find(u=>u.email===email);
+ if(!user||mdp!==DEMO_PASSWORD){const err=document.getElementById("loginError");err.textContent="Identifiants invalides. Utilisez un compte fictif et le mot de passe demo123.";err.classList.remove("hidden");return}
+ currentUser=user;sessionStorage.setItem("antigaspipro_session",user.id);document.getElementById("loginError").classList.add("hidden");ouvrirApp();
+});
+function restaurerSession(){const id=sessionStorage.getItem("antigaspipro_session");const user=USERS.find(u=>u.id===id
