@@ -99,12 +99,7 @@ aside .linkbtn{color:#9fb8a8}
       <input id="pw" type="password" required>
       <div id="lerr" class="err hidden" role="alert"></div>
       <button class="btn" style="width:100%;margin-top:1rem">Se connecter</button>
-      <div class="demo">
-        <b>Comptes de démonstration (fictifs)</b> – mot de passe commun : <code>demo123</code>
-        <button type="button" data-u="admin@antigaspipro.fr">Administrateur de la plateforme</button>
-        <button type="button" data-u="responsable@antigaspipro.fr">Responsable de restaurant</button>
-        <button type="button" data-u="employe@antigaspipro.fr">Employé</button>
-      </div>
+      <div class="note">Connexion réelle Supabase. Utilisez votre compte personnel, pas demo123.</div>
       <p style="text-align:center;margin:1rem 0 .4rem"><button type="button" class="linkbtn" id="reqopen">Demander un accès pour mon restaurant</button></p>
       <p style="text-align:center;font-size:.8rem;color:var(--mute);margin:0"><button type="button" class="linkbtn" data-legal="mentions">Mentions légales</button> · <button type="button" class="linkbtn" data-legal="privacy">Confidentialité</button> · <button type="button" class="linkbtn" data-legal="cgu">Conditions</button></p>
     </form>
@@ -127,441 +122,136 @@ aside .linkbtn{color:#9fb8a8}
 
 <div id="errbox" class="hidden" role="alert"></div>
 <script>
-"use strict";
-window.onerror=(m,s,l)=>{const b=document.getElementById("errbox");b.classList.remove("hidden");b.textContent="Erreur détectée : "+m+" (ligne "+l+")"};
-/* ========= Configuration Supabase (non connecté) =========
-   Pour la suite : renseigner l'URL du projet et la clé « anon » (publique).
-   N'écrivez JAMAIS la clé « service_role » ni un mot de passe ici : ce fichier est public.
-   Le schéma de base de données est fourni dans supabase-schema.sql. */
-const CFG={supabaseUrl:"",supabaseAnonKey:""};
-const DEMO=!CFG.supabaseUrl;
-document.getElementById("demobar").textContent=DEMO
- ?"Mode démonstration : toutes les données sont fictives et stockées uniquement dans ce navigateur. Supabase n'est pas connecté."
- :"Supabase configuré (non vérifié).";
-
-/* ========= Données ========= */
-const KEY="antigaspipro_db_v5", SKEY="antigaspipro_session_v5", PASS="demo123";
-const ROLES={admin:"Administrateur",responsable:"Responsable de restaurant",employe:"Employé"};
-const REASONS=["Invendu en fin de service","Date dépassée","Surproduction","Erreur de préparation","Produit abîmé","Retour client","Restes d'assiette","Chaîne du froid rompue"];
-const UNITS=["kg","L","pièce","portion"];
-const UN={"pièce":{fam:"n",f:1},portion:{fam:"n",f:1},g:{fam:"m",f:.001},kg:{fam:"m",f:1},mL:{fam:"v",f:.001},L:{fam:"v",f:1}};
-const FAM={kg:"m",L:"v","pièce":"n",portion:"n"};
-const PRE={"pièce":[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50],portion:[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50],g:[50,100,200,250,500,1000,2000,5000],kg:[.5,1,2,3,5,10],mL:[100,250,500,1000,2000],L:[.5,1,2,5,10]};
-const DATES=[["0","Aujourd'hui"],["1","Hier"],["2","Avant-hier"],["3","Il y a 3 jours"],["7","Il y a 7 jours"]];
-const FAMU={m:["g","kg"],v:["mL","L"],n:["pièce","portion"],all:["pièce","portion","g","kg","mL","L"]};
-const DEF={m:"g",v:"mL",n:"pièce",all:"pièce"};
-const BASEU={m:"kg",v:"L",n:"pièce"};
-/* Produits types de fast-food (import optionnel dans le catalogue) : coûts d'achat FICTIFS par kg, L ou pièce */
-const FASTFOOD=[["Burger classique","n",1.8,"Plats préparés"],["Cheeseburger","n",1.6,"Plats préparés"],["Double burger","n",2.6,"Plats préparés"],["Burger poulet","n",1.9,"Plats préparés"],["Steak haché","m",11,"Viandes"],["Filet de poulet pané","m",8.5,"Viandes"],["Nuggets","m",7.5,"Viandes"],["Frites","m",2.2,"Épicerie"],["Pain burger","n",.35,"Boulangerie"],["Fromage en tranche","m",8,"Produits laitiers"],["Salade","m",4,"Fruits et légumes"],["Tomates","m",3.2,"Fruits et légumes"],["Oignons","m",1.5,"Fruits et légumes"],["Bacon","m",9,"Viandes"],["Sauce (ketchup, mayo…)","v",5,"Sauces et boissons"],["Boisson gazeuse","v",1.5,"Sauces et boissons"],["Milkshake","v",4,"Sauces et boissons"],["Glace","v",5,"Plats préparés"],["Café","v",3,"Sauces et boissons"],["Wrap","n",1.2,"Plats préparés"],["Sandwich","n",2,"Plats préparés"],["Kebab (viande)","m",9,"Viandes"],["Pizza","n",3,"Plats préparés"],["Cookie ou dessert","n",.9,"Boulangerie"]];
-const CATS=["Viandes","Poissons","Produits laitiers","Fruits et légumes","Épicerie","Boulangerie","Sauces et boissons","Plats préparés","Autre"];
-const NAV={
- admin:[["accueil","Vue d'ensemble"],["restaurants","Restaurants inscrits"],["demandes","Demandes d'accès"],["gaspillages","Gaspillages"],["rapports","Rapports"]],
- responsable:[["accueil","Tableau de bord"],["gaspillages","Gaspillages"],["catalogue","Catalogue produits"],["achats","Achats et factures"],["restaurant","Mon restaurant"]],
- employe:[["saisie","Enregistrer un gaspillage"],["catalogue","Catalogue du restaurant"],["mesgaspillages","Mes saisies"]]
-};
-const day=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-function seed(){
- let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
- const R=[{id:"r1",name:"Burger du Centre",type:"Fast-food",city:"Paris",status:"Actif"},
-  {id:"r2",name:"Le Petit Bistrot",type:"Restaurant",city:"Bobigny",status:"Actif"},
-  {id:"r3",name:"Pizza Express",type:"Fast-food",city:"Montreuil",status:"Suspendu"}];
- const U=[["admin@antigaspipro.fr","Admin Plateforme","admin",""],["responsable@antigaspipro.fr","Karim Responsable","responsable","r1"],
-  ["employe@antigaspipro.fr","Léa Employée","employe","r1"],["resp.bistrot@antigaspipro.fr","Sophie Martin","responsable","r2"],
-  ["employe.bistrot@antigaspipro.fr","Tom Lefèvre","employe","r2"],["resp.pizza@antigaspipro.fr","Marco Rossi","responsable","r3"]]
-  .map(([email,name,role,restaurant])=>({email,name,role,restaurant}));
- const P=[["r1","Steak haché","Viandes","kg",11,18,2],["r1","Pain burger","Boulangerie","pièce",.65,40,1],["r1","Frites surgelées","Épicerie","kg",2.2,25,30],
-  ["r1","Fromage en tranche","Produits laitiers","kg",8,6,9],["r1","Salade","Fruits et légumes","kg",4,4,0],["r1","Sauce maison","Sauces et boissons","L",5,8,20],
-  ["r1","Nuggets","Viandes","kg",7.5,10,3],["r1","Boisson gazeuse","Sauces et boissons","L",1.5,30,120],["r1","Salade composée","Plats préparés","portion",3.2,12,0],
-  ["r2","Poulet fermier","Viandes","kg",9.5,12,1],["r2","Saumon frais","Poissons","kg",24,6,-1],["r2","Tomates","Fruits et légumes","kg",3.2,15,2],
-  ["r2","Riz basmati","Épicerie","kg",2.4,25,200],["r2","Crème fraîche","Produits laitiers","L",4.8,8,6],["r2","Salade verte","Fruits et légumes","pièce",1.1,10,0]]
-  .map(([restaurant,name,cat,unit,price,qty,e])=>({id:uid(),restaurant,name,cat,unit,price,qty,expiry:day(e)}));
- const W=[];
- for(let i=0;i<50;i++){
-  const r=rnd()<.6?"r1":"r2",pl=P.filter(p=>p.restaurant===r),p=pl[Math.floor(rnd()*pl.length)];
-  const n=p.unit==="pièce"||p.unit==="portion",qty=n?Math.round(2+rnd()*14):Math.round((.5+rnd()*4)*2)/2;
-  W.push({id:uid(),restaurant:r,product:p.name,unit:p.unit,qty,cost:+(qty*p.price).toFixed(2),
-   reason:REASONS[Math.floor(rnd()*REASONS.length)],date:day(-Math.floor(rnd()*45)),by:r==="r1"?"employe@antigaspipro.fr":"employe.bistrot@antigaspipro.fr"});
- }
- const A=[["Steak haché",10,"kg",110,11],["Pain burger",200,"pièce",130,.65]].map(([product,qty,unit,total,unitPrice],i)=>({id:uid(),restaurant:"r1",date:day(-5-i),supplier:"Grossiste Démo (fictif)",product,qty,unit,total,unitPrice,baseUnit:unit}));
- return{restaurants:R,users:U,products:P,wastes:W,purchases:A,requests:[{id:uid(),date:day(-1),name:"Kebab Délice",type:"Fast-food",city:"Bobigny",contact:"Yassine Amrani",email:"contact@kebab-delice.example",phone:"",status:"En attente",consent:true,consentAt:new Date().toISOString(),consentVersion:"2026-10"}]};
-}
-/* Couche de stockage : c'est la seule partie à remplacer par Supabase plus tard. */
-let db;
-function load(){try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){db=null}if(!db||!db.users){db=seed();save()}db.purchases=db.purchases||[];db.requests=db.requests||[]}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Enregistrement impossible dans ce navigateur.",1)}}
-
-/* ========= Utilitaires ========= */
-const $=s=>document.querySelector(s);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const eur=n=>Number(n||0).toLocaleString("fr-FR",{style:"currency",currency:"EUR"});
-const pfmt=x=>Number(x).toLocaleString("fr-FR",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:4});
-const stk=p=>typeof p.qty==="number"?num(p.qty)+" "+p.unit:"–";
-const expBadge=d=>{if(!d)return"–";const n=-ago(d);return fdate(d)+" "+(n<0?'<span class="badge b-urg">Périmé</span>':n<=2?`<span class="badge b-urg">Urgent (${n===0?"aujourd'hui":n+" j"})</span>`:n<=5?`<span class="badge b-fic">Bientôt (${n} j)</span>`:'<span class="badge b-ok">OK</span>')};
-const num=n=>Number(n||0).toLocaleString("fr-FR",{maximumFractionDigits:2});
-const fdate=d=>d?new Date(d+"T00:00").toLocaleDateString("fr-FR"):"";
-const ago=d=>Math.round((new Date(new Date().toISOString().slice(0,10)+"T00:00")-new Date(d+"T00:00"))/864e5);
-const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
-const group=(a,kf,vf)=>a.reduce((m,x)=>(m[kf(x)]=(m[kf(x)]||0)+vf(x),m),{});
-const rest=id=>db.restaurants.find(r=>r.id===id)||{name:"(supprimé)"};
-const uname=e=>(db.users.find(u=>u.email===e)||{}).name||e;
-const mineW=()=>db.wastes.filter(w=>w.restaurant===me.restaurant);
-const last30=a=>a.filter(w=>ago(w.date)<30);
-function toast(m,err){const t=document.createElement("div");t.className="t"+(err?" e":"");t.textContent=m;$("#toast").append(t);setTimeout(()=>t.remove(),3200)}
-let me=null;
-
-/* ========= Fenêtres ========= */
-function openForm(title,fields,vals,onSave){
- const f=$("#dform");
- f.innerHTML=`<h2>${esc(title)}</h2>`+fields.map(x=>{
-  const v=vals[x.k]??"";
-  const inp=x.opts?`<select id="f_${x.k}">${x.opts.map(o=>`<option ${String(o)===String(v)?"selected":""}>${esc(o)}</option>`).join("")}</select>`
-   :`<input id="f_${x.k}" type="${x.t||"text"}" ${x.t==="number"?'step="any" min="0"':""} ${x.max?`max="${x.max}"`:""} value="${esc(v)}" ${x.opt?"":"required"}>`;
-  return`<label for="f_${x.k}">${esc(x.l)}</label>${inp}`}).join("")+
-  `<div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
- $("#fc").onclick=()=>$("#dlg").close();
- f.onsubmit=e=>{e.preventDefault();const o={};
-  for(const x of fields){let v=$("#f_"+x.k).value.trim();if(x.t==="number"&&!(x.opt&&v===""))v=parseFloat(v);o[x.k]=v}
-  for(const x of fields)if(x.t==="number"&&o[x.k]!==""&&(isNaN(o[x.k])||o[x.k]<0||(x.pos&&o[x.k]===0))){toast(`« ${x.l} » doit être un nombre ${x.pos?"supérieur à 0":"positif"}.`,1);return}
-  onSave(o);$("#dlg").close()};
- $("#dlg").showModal();
-}
-function confirmBox(title,msg,label,fn){
- const f=$("#dform");f.onsubmit=e=>e.preventDefault();
- f.innerHTML=`<h2>${esc(title)}</h2><p>${esc(msg)}</p><div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button type="button" class="btn danger" id="fy">${esc(label)}</button></div>`;
- $("#fc").onclick=()=>$("#dlg").close();$("#fy").onclick=()=>{fn();$("#dlg").close()};$("#dlg").showModal();
-}
-
-/* ========= Connexion (démonstration uniquement) ========= */
-function login(email,pw){
- const u=db.users.find(x=>x.email===email.toLowerCase().trim());
- if(!u)return"Aucun compte ne correspond à cette adresse. Utilisez l'un des comptes de démonstration.";
- if(pw!==PASS)return"Mot de passe incorrect. Le mot de passe de démonstration est affiché sous le formulaire.";
- if(u.role!=="admin"&&rest(u.restaurant).status==="Suspendu")return"Ce restaurant est suspendu par l'administrateur de la plateforme.";
- localStorage.setItem(SKEY,u.email);return null}
-$("#lform").onsubmit=e=>{e.preventDefault();const r=login($("#em").value,$("#pw").value);
- if(r){$("#lerr").textContent=r;$("#lerr").classList.remove("hidden")}else{location.hash="";boot()}};
-document.querySelectorAll(".demo button").forEach(b=>b.onclick=()=>{$("#em").value=b.dataset.u;$("#pw").value=PASS;$("#lform").requestSubmit()});
-$("#logout").onclick=()=>{localStorage.removeItem(SKEY);me=null;location.hash="";boot();toast("Vous êtes déconnecté.")};
-$("#burger").onclick=()=>$("#side").classList.toggle("open");
-
-function boot(){
- load();
- me=db.users.find(u=>u.email===localStorage.getItem(SKEY))||null;
- $("#login").classList.toggle("hidden",!!me);$("#app").classList.toggle("hidden",!me);
- if(!me)return;
- $("#uname").textContent=me.name;$("#urole").textContent=ROLES[me.role];
- $("#urest").textContent=me.role==="admin"?"":rest(me.restaurant).name;
- $("#nav").innerHTML=NAV[me.role].map(([p,l])=>`<a href="#/${p}" data-p="${p}">${l}</a>`).join("")+
-  `<a href="#" id="reset" style="margin-top:1.2rem;color:#f0b4ab">Réinitialiser les données</a>`;
- $("#reset").onclick=ev=>{ev.preventDefault();confirmBox("Réinitialiser les données","Toutes vos modifications seront remplacées par les données de démonstration d'origine.","Réinitialiser",()=>{db=seed();save();route();toast("Données de démonstration réinitialisées.")})};
- route();
-}
-
-/* ========= Routage avec contrôle de rôle (démonstration, côté navigateur) ========= */
-const PAGES={admin:{},responsable:{},employe:{}},WIRE={};
-function route(){
- if(!me)return;
- let p=location.hash.replace("#/","");
- const allowed=NAV[me.role].map(x=>x[0]);
- if(!allowed.includes(p)){p=allowed[0];history.replaceState(null,"","#/"+p)}
- document.querySelectorAll("#nav a[data-p]").forEach(a=>a.classList.toggle("on",a.dataset.p===p));
- $("#side").classList.remove("open");
- $("#view").innerHTML=PAGES[me.role][p]();
- const w=WIRE[me.role+"."+p];if(w)w();
-}
-window.addEventListener("hashchange",route);
-
-/* ========= Éléments communs ========= */
-const stat=(v,l)=>`<div class="card stat"><b>${v}</b><span>${l}</span></div>`;
-const empty=t=>`<div class="card empty">${t}</div>`;
-function bars(map,fmt){const e=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,7);if(!e.length)return'<div class="empty">Aucune donnée pour le moment.</div>';
- const m=e[0][1]||1;return e.map(([k,v])=>`<div class="bar"><span title="${esc(k)}">${esc(k)}</span><i style="width:${Math.max(3,v/m*55)}%"></i><span>${(fmt||eur)(v)}</span></div>`).join("")}
-function evo(W){const b=[0,0,0,0,0,0];W.forEach(w=>{const k=Math.floor(ago(w.date)/7);if(k>=0&&k<6)b[k]+=w.cost});
- const m=Math.max(...b,1);
- return`<div class="evo">`+[5,4,3,2,1,0].map(k=>`<div><span>${b[k]?eur(b[k]):""}</span><i class="${k?"":"now"}" style="height:${b[k]/m*100*.8}%"></i>${k?`il y a ${k} sem.`:"cette sem."}</div>`).join("")+`</div>`}
-function variation(W){const c=sum(W.filter(w=>ago(w.date)<7),w=>w.cost),p=sum(W.filter(w=>ago(w.date)>=7&&ago(w.date)<14),w=>w.cost);
- if(!p)return c?"nouveau":"–";const v=(c-p)/p*100;return(v>0?"+":"")+num(v)+" %"}
-const baseQty=(W,fam)=>sum(W.filter(w=>(UN[w.unit]||{}).fam===fam),w=>w.qty*UN[w.unit].f);
-const qtyStats=W=>stat(num(baseQty(W,"m"))+" kg","d'aliments solides jetés (30 jours)")+stat(num(baseQty(W,"v"))+" L","de liquides jetés (30 jours)")+stat(num(baseQty(W,"n"))+" pièces","ou portions jetées (30 jours)");
-function wasteTable(list,opts={}){
- if(!list.length)return empty("Aucun gaspillage enregistré. Utilisez « Enregistrer un gaspillage » dès qu'un produit est jeté.");
- return`<div class="tw"><table><thead><tr><th>Date</th>${opts.rest?"<th>Restaurant</th>":""}<th>Produit</th><th>Quantité</th><th>Raison</th><th>Coût estimé</th><th>Saisi par</th>${opts.del?"<th>Action</th>":""}</tr></thead><tbody>`+
- list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(w=>`<tr><td>${fdate(w.date)}</td>${opts.rest?`<td>${esc(rest(w.restaurant).name)}</td>`:""}<td><b>${esc(w.product)}</b></td><td>${num(w.qty)} ${esc(w.unit)}</td><td>${esc(w.reason)}</td><td>${eur(w.cost)}</td><td>${esc(uname(w.by))}</td>${opts.del?`<td><button class="btn danger sm" data-delw="${w.id}">Supprimer</button></td>`:""}</tr>`).join("")+"</tbody></table></div>"}
-function mountWasteForm(f,modal){
- const P=db.products.filter(p=>p.restaurant===me.restaurant);
- if(!P.length){f.innerHTML=`<p>Le catalogue de votre restaurant est vide. ${me.role==="employe"?"Demandez à votre responsable d'ajouter des produits.":"Ajoutez des produits ou enregistrez un achat avant de saisir un gaspillage."}</p>`;return}
- const L=(a,fn)=>a.map(fn).join("");
- f.innerHTML=(modal?"<h2>Enregistrer un gaspillage</h2>":"")+
- `<label for="fp">1. Produit jeté</label><select id="fp">${L(P,p=>`<option value="${esc(p.id)}">${esc(p.name)} – ${pfmt(p.price)} / ${esc(p.unit)}</option>`)}</select>
- <label for="fu">2. Unité</label><select id="fu"></select>
- <label for="fq">3. Quantité jetée</label><select id="fq"></select>
- <div id="fql" class="hidden"><label for="fqv">Quantité exacte</label><input id="fqv" type="number" min="0" step="any" inputmode="decimal" placeholder="Exemple : 7 ou 1,5"></div>
- <label for="fr">4. Raison du gaspillage</label><select id="fr">${L(REASONS,r=>`<option>${esc(r)}</option>`)}</select>
- <label for="fd">5. Date</label><select id="fd">${L(DATES,d=>`<option value="${d[0]}">${d[1]}</option>`)}<option value="x">Choisir une date…</option></select>
- <div id="fdl" class="hidden"><input id="fdv" type="date" max="${day(0)}" value="${day(0)}" aria-label="Date"></div>
- <small id="fpr" style="color:var(--mute)"></small><div class="cost" id="fc2"></div>
- <button class="btn big">Enregistrer le gaspillage</button>${modal?'<button type="button" class="btn sec big" id="fc">Annuler</button>':""}`;
- const cur=()=>P.find(x=>x.id===$("#fp").value),price=()=>cur().price*UN[$("#fu").value].f;
- const qty=()=>$("#fq").value==="x"?parseFloat($("#fqv").value):parseFloat($("#fq").value);
- function calc(){const q=qty();$("#fpr").textContent="Prix unitaire : "+pfmt(price())+" / "+$("#fu").value;$("#fc2").textContent=q>0?"Coût estimé : "+eur(q*price()):""}
- function zone(){$("#fql").classList.toggle("hidden",$("#fq").value!=="x")}
- function presets(){$("#fq").innerHTML=L(PRE[$("#fu").value],q=>`<option value="${q}">${num(q)}</option>`)+'<option value="x">Autre quantité (saisie libre)</option>';zone();calc()}
- function units(){const p=cur(),fam=FAM[p.unit]||"n";$("#fu").innerHTML=L(FAMU[fam],u=>`<option ${u===p.unit?"selected":""}>${u}</option>`);presets()}
- $("#fp").onchange=units;$("#fu").onchange=presets;$("#fq").onchange=()=>{zone();calc()};$("#fqv").oninput=calc;
- $("#fd").onchange=()=>$("#fdl").classList.toggle("hidden",$("#fd").value!=="x");
- if(modal)$("#fc").onclick=()=>$("#dlg").close();
- f.onsubmit=e=>{e.preventDefault();
-  const p=cur(),q=qty(),u=$("#fu").value,d=$("#fd").value==="x"?$("#fdv").value:day(-Number($("#fd").value));
-  if(!(q>0)){toast("Indiquez une quantité supérieure à 0.",1);return}
-  if(!d||d>day(0)){toast("La date ne peut pas être dans le futur.",1);return}
-  db.wastes.push({id:uid(),restaurant:me.restaurant,product:p.name,unit:u,qty:q,cost:+(q*price()).toFixed(2),reason:$("#fr").value,date:d,by:me.email});
-  if(typeof p.qty==="number")p.qty=Math.max(0,+(p.qty-q*UN[u].f/UN[p.unit].f).toFixed(3));
-  save();if(modal)$("#dlg").close();route();toast(`Gaspillage enregistré : ${num(q)} ${u} de ${p.name}.`)};
- units();
-}
-function addWaste(){
- if(!db.products.some(p=>p.restaurant===me.restaurant)){toast("Le catalogue est vide : ajoutez des produits ou enregistrez un achat avant de saisir un gaspillage.",1);return}
- mountWasteForm($("#dform"),true);$("#dlg").showModal()}
-function wireDelW(){document.querySelectorAll("[data-delw]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cette saisie","Cette ligne sera retirée des statistiques et la quantité remise en stock.","Supprimer",()=>{const w0=db.wastes.find(w=>w.id===b.dataset.delw),pp=w0&&db.products.find(x=>x.restaurant===w0.restaurant&&x.name===w0.product);if(pp&&typeof pp.qty==="number")pp.qty=+(pp.qty+w0.qty*UN[w0.unit].f/UN[pp.unit].f).toFixed(3);db.wastes=db.wastes.filter(w=>w.id!==b.dataset.delw);save();route();toast("Saisie supprimée.")}))}
-
-/* ========= Administrateur ========= */
-const prev30=a=>a.filter(w=>ago(w.date)>=30&&ago(w.date)<60);
-const eco=W=>{const c=sum(last30(W),w=>w.cost),p=sum(prev30(W),w=>w.cost);return p>0?{v:Math.max(0,p-c),sub:c>p?"coût en hausse de "+eur(c-p):"par rapport aux 30 jours précédents"}:{v:null,sub:"pas encore de période de comparaison"}};
-const ecoStat=W=>{const e=eco(W);return stat(e.v===null?"–":eur(e.v),`économie réalisée sur 30 jours<br><small>${e.sub}</small>`)};
-const potStat=c=>stat(eur(c*.2),"économies potentielles estimées<br><small>hypothèse : −20 % de gaspillage</small>");
-const volTxt=W=>[num(baseQty(W,"m"))+" kg",num(baseQty(W,"v"))+" L",num(baseQty(W,"n"))+" pièces"].join(" · ");
-PAGES.admin.accueil=()=>{const W=db.wastes,W30=last30(W),R=db.restaurants,c=sum(W30,w=>w.cost);
- return`<h1>Vue d'ensemble de la plateforme</h1><div class="note">Données entièrement fictives (démonstration). Les économies potentielles reposent sur une hypothèse de −20 %. L'économie réalisée compare les 30 derniers jours aux 30 jours précédents.</div>
- <div class="grid">${stat(R.length,"restaurants inscrits")}${stat(R.filter(r=>r.status==="Actif").length,"restaurants actifs")}${stat(db.requests.filter(q=>q.status==="En attente").length,"demandes d'accès en attente")}${stat(eur(c),"coût du gaspillage (30 jours)")}${stat(W30.length,"saisies (30 jours)")}${potStat(c)}${ecoStat(W)}</div>
- <div class="card"><h2>Évolution du coût du gaspillage (toute la plateforme)</h2>${evo(W)}</div><br>
- <div class="card"><h2>Détail par restaurant (30 jours)</h2><div class="tw"><table><thead><tr><th>Restaurant</th><th>Statut</th><th>Volume gaspillé</th><th>Coût</th><th>Économies potentielles</th><th>Économie réalisée</th></tr></thead><tbody>`+
- R.map(r=>{const w=W.filter(x=>x.restaurant===r.id),w30=last30(w),cc=sum(w30,x=>x.cost),e=eco(w);
-  return`<tr><td><b>${esc(r.name)}</b></td><td><span class="badge ${r.status==="Actif"?"b-ok":"b-urg"}">${esc(r.status)}</span></td><td>${volTxt(w30)}</td><td>${eur(cc)}</td><td>${eur(cc*.2)}</td><td>${e.v===null?"–":eur(e.v)}</td></tr>`}).join("")+`</tbody></table></div></div>`};
-PAGES.admin.gaspillages=()=>`<h1>Gaspillages de la plateforme</h1>`+wasteTable(db.wastes,{rest:1,del:1});
-WIRE["admin.gaspillages"]=()=>wireDelW();
-PAGES.admin.rapports=()=>{const W30=last30(db.wastes),c=sum(W30,w=>w.cost);
- return`<h1>Rapports de la plateforme</h1><div class="grid">${stat(eur(c),"coût total (30 jours)")}${stat(W30.length,"saisies (30 jours)")}${potStat(c)}${ecoStat(db.wastes)}</div>
- <div class="card"><h2>Coût par restaurant</h2>${bars(group(W30,w=>rest(w.restaurant).name,w=>w.cost))}</div><br>
- <div class="card"><h2>Coût par raison</h2>${bars(group(W30,w=>w.reason,w=>w.cost))}</div><br>
- <div class="card"><h2>Produits les plus gaspillés</h2>${bars(group(W30,w=>w.product,w=>w.cost))}</div>`};
-const restFields=[{k:"name",l:"Nom de l'établissement"},{k:"type",l:"Type",opts:["Restaurant","Fast-food"]},{k:"city",l:"Ville"}];
-PAGES.admin.restaurants=()=>`<div class="bar-top"><h1>Restaurants inscrits</h1><button class="btn" id="addr">Ajouter un restaurant</button></div>
- <div class="tw"><table><thead><tr><th>Établissement</th><th>Type</th><th>Ville</th><th>Responsable</th><th>Statut</th><th>Coût 30 j</th><th>Actions</th></tr></thead><tbody>`+
- db.restaurants.map(r=>{const m=db.users.find(u=>u.restaurant===r.id&&u.role==="responsable");
-  return`<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.type)}</td><td>${esc(r.city)}</td><td>${m?esc(m.name):"–"}</td><td><span class="badge ${r.status==="Actif"?"b-ok":"b-urg"}">${r.status}</span></td><td>${eur(sum(last30(db.wastes.filter(w=>w.restaurant===r.id)),w=>w.cost))}</td>
-  <td><button class="btn sec sm" data-edit="${r.id}">Modifier</button> <button class="btn sec sm" data-tog="${r.id}">${r.status==="Actif"?"Suspendre":"Réactiver"}</button> <button class="btn danger sm" data-del="${r.id}">Supprimer</button></td></tr>`}).join("")+`</tbody></table></div>`;
-WIRE["admin.restaurants"]=()=>{
- $("#addr").onclick=()=>openForm("Ajouter un restaurant",[...restFields,{k:"mname",l:"Nom du responsable"},{k:"memail",l:"E-mail du responsable",t:"email"}],{type:"Restaurant"},o=>{
-  const email=o.memail.toLowerCase();if(db.users.some(u=>u.email===email)){toast("Cette adresse e-mail existe déjà.",1);return}
-  const id="r"+uid();db.restaurants.push({id,name:o.name,type:o.type,city:o.city,status:"Actif"});
-  db.users.push({email,name:o.mname,role:"responsable",restaurant:id});save();route();toast("Restaurant ajouté (démonstration : aucun e-mail envoyé).")});
- document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.edit);
-  openForm("Modifier le restaurant",restFields,r,o=>{Object.assign(r,o);save();route();toast("Restaurant modifié.")})});
- document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.tog);
-  r.status=r.status==="Actif"?"Suspendu":"Actif";save();route();toast(`${r.name} : ${r.status==="Actif"?"réactivé":"suspendu"}.`)});
- document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce restaurant","Son catalogue, son équipe et tous ses gaspillages seront aussi supprimés.","Supprimer",()=>{
-  const id=b.dataset.del;db.restaurants=db.restaurants.filter(r=>r.id!==id);db.products=db.products.filter(p=>p.restaurant!==id);
-  db.wastes=db.wastes.filter(w=>w.restaurant!==id);db.purchases=db.purchases.filter(a=>a.restaurant!==id);db.users=db.users.filter(u=>u.restaurant!==id);save();route();toast("Restaurant supprimé.")}))};
-
-/* ========= Responsable de restaurant ========= */
-PAGES.responsable.accueil=()=>{const W=mineW(),W30=last30(W),v=variation(W),c=sum(W30,w=>w.cost);
- const watch=db.products.filter(p=>p.restaurant===me.restaurant&&p.expiry&&-ago(p.expiry)<=5).sort((a,b)=>a.expiry.localeCompare(b.expiry));
- return`<h1>Tableau de bord – ${esc(rest(me.restaurant).name)}</h1><div class="note">Données de démonstration fictives. L'économie réalisée compare les 30 derniers jours aux 30 jours précédents.</div>
- <div class="grid">${stat(eur(c),"coût estimé du gaspillage (30 jours)")}${qtyStats(W30)}${stat(v,"évolution du coût, 7 derniers jours")}${stat(watch.length,"produits à écouler sous 5 jours")}${potStat(c)}${ecoStat(W)}</div>
- <div class="card"><h2>Actions rapides</h2><button class="btn" id="addw">Enregistrer un gaspillage</button> <button class="btn sec" id="goachats">Achats et factures</button> <button class="btn sec" id="gocat">Gérer le catalogue</button></div><br>
- <div class="card"><h2>Produits à écouler en priorité</h2>${watch.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Stock</th><th>Péremption</th><th>Valeur en jeu</th></tr></thead><tbody>`+watch.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${stk(p)}</td><td>${expBadge(p.expiry)}</td><td>${typeof p.qty==="number"?eur(p.qty*p.price):"–"}</td></tr>`).join("")+"</tbody></table></div>":'<div class="empty">Aucun produit proche de la péremption.</div>'}</div><br>
- <div class="card"><h2>Évolution hebdomadaire du coût</h2>${evo(W)}</div><br>
- <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"><div class="card"><h2>Coût par raison</h2>${bars(group(W30,w=>w.reason,w=>w.cost))}</div>
- <div class="card"><h2>Produits les plus gaspillés</h2>${bars(group(W30,w=>w.product,w=>w.cost))}</div></div>`};
-WIRE["responsable.accueil"]=()=>{$("#addw").onclick=addWaste;$("#goachats").onclick=()=>location.hash="#/achats";$("#gocat").onclick=()=>location.hash="#/catalogue"};
-PAGES.responsable.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages</h1><button class="btn" id="addw">Enregistrer un gaspillage</button></div>`+wasteTable(mineW(),{del:1});
-WIRE["responsable.gaspillages"]=()=>{$("#addw").onclick=addWaste;wireDelW()};
-const prodFields=[{k:"name",l:"Nom du produit"},{k:"cat",l:"Catégorie",opts:CATS},{k:"unit",l:"Unité",opts:UNITS},{k:"price",l:"Coût d'achat par unité (€)",t:"number",pos:1},{k:"qty",l:"Stock actuel (dans l'unité du produit, facultatif)",t:"number",opt:1},{k:"expiry",l:"Date de péremption (facultative)",t:"date",opt:1}];
-PAGES.responsable.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
- return`<div class="bar-top"><h1>Catalogue produits</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="addstd">Importer les produits types</button><button class="btn" id="addp">Ajouter un produit</button></div></div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Stock</th><th>Péremption</th><th>Coût unitaire</th><th>Actions</th></tr></thead><tbody>`+
- P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${stk(p)}</td><td>${expBadge(p.expiry)}</td><td>${pfmt(p.price)} / ${esc(p.unit)}</td><td><button class="btn sec sm" data-edit="${p.id}">Modifier</button> <button class="btn danger sm" data-del="${p.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide. Ajoutez vos produits, importez les produits types de fast-food ou enregistrez un achat : vos employés ne peuvent déclarer que les produits de ce catalogue."))};
-WIRE["responsable.catalogue"]=()=>{
- $("#addstd").onclick=()=>confirmBox("Importer les produits types","Les produits types de fast-food (burgers, frites, sauces…) sont ajoutés à votre catalogue avec des prix d'achat fictifs. Vos produits existants ne sont pas modifiés. Enregistrez ensuite vos achats pour obtenir vos vrais prix.","Importer",()=>{
-  const have=new Set(db.products.filter(p=>p.restaurant===me.restaurant).map(p=>p.name.toLowerCase()));let n=0;
-  FASTFOOD.forEach(([name,fam,price,cat])=>{if(!have.has(name.toLowerCase())){db.products.push({id:uid(),restaurant:me.restaurant,name,cat,unit:BASEU[fam],price});n++}});
-  save();route();toast(n+" produit(s) ajouté(s) au catalogue.")});
- $("#addp").onclick=()=>openForm("Ajouter un produit",prodFields,{cat:CATS[0],unit:"kg"},o=>{
-  if(db.products.some(p=>p.restaurant===me.restaurant&&p.name.toLowerCase()===o.name.toLowerCase())){toast("Ce produit existe déjà dans le catalogue.",1);return}
-  o.id=uid();o.restaurant=me.restaurant;db.products.push(o);save();route();toast("Produit ajouté au catalogue.")});
- document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const p=db.products.find(x=>x.id===b.dataset.edit);
-  openForm("Modifier le produit",prodFields,p,o=>{Object.assign(p,o);save();route();toast("Produit modifié.")})});
- document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce produit","Les gaspillages déjà enregistrés sont conservés.","Supprimer",()=>{db.products=db.products.filter(x=>x.id!==b.dataset.del);save();route();toast("Produit supprimé.")}))};
-PAGES.responsable.restaurant=()=>{const r=rest(me.restaurant),T=db.users.filter(u=>u.restaurant===me.restaurant&&u.role==="employe");
- return`<h1>Mon restaurant</h1><div class="card" style="margin-bottom:1.2rem"><div class="bar-top" style="margin:0"><div><h2 style="margin:0">${esc(r.name)}</h2><span style="color:var(--mute)">${esc(r.type)} – ${esc(r.city)}</span></div><button class="btn sec" id="editr">Modifier</button></div></div>
- <div class="bar-top"><h2 style="margin:0">Équipe</h2><button class="btn" id="addt">Ajouter un employé</button></div>`+
- (T.length?`<div class="tw"><table><thead><tr><th>Nom</th><th>E-mail</th><th>Action</th></tr></thead><tbody>`+T.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.email)}</td><td><button class="btn danger sm" data-delu="${esc(u.email)}">Retirer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun employé. Ajoutez votre équipe pour qu'elle enregistre les gaspillages."))};
-WIRE["responsable.restaurant"]=()=>{
- $("#editr").onclick=()=>{const r=rest(me.restaurant);openForm("Modifier mon restaurant",restFields,r,o=>{Object.assign(r,o);save();boot();toast("Informations enregistrées.")})};
- $("#addt").onclick=()=>openForm("Ajouter un employé",[{k:"name",l:"Nom"},{k:"email",l:"E-mail",t:"email"}],{},o=>{
-  o.email=o.email.toLowerCase();if(db.users.some(u=>u.email===o.email)){toast("Cette adresse e-mail existe déjà.",1);return}
-  db.users.push({email:o.email,name:o.name,role:"employe",restaurant:me.restaurant});save();route();toast("Employé ajouté (démonstration : aucun e-mail envoyé).")});
- document.querySelectorAll("[data-delu]").forEach(b=>b.onclick=()=>confirmBox("Retirer cet employé","Ses saisies passées sont conservées.","Retirer",()=>{db.users=db.users.filter(u=>u.email!==b.dataset.delu);save();route();toast("Employé retiré.")}))};
-
-/* ========= Achats et factures (responsable) ========= */
-const UALIAS={piece:"pièce",pieces:"pièce",pcs:"pièce",pc:"pièce",u:"pièce",unite:"pièce",unites:"pièce",portion:"portion",portions:"portion",g:"g",gr:"g",gramme:"g",grammes:"g",kg:"kg",kilo:"kg",kilos:"kg",ml:"mL",l:"L",litre:"L",litres:"L"};
-const normUnit=s=>UALIAS[(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()]||s;
-function infoBox(title,html){const f=$("#dform");f.onsubmit=e=>e.preventDefault();
- f.innerHTML=`<h2>${esc(title)}</h2>${html}<div class="acts"><button type="button" class="btn" id="fc">Fermer</button></div>`;$("#fc").onclick=()=>$("#dlg").close();$("#dlg").showModal()}
-function addPurchase(l){
- l.product=(l.product||"").trim();
- if(!l.product)return"Indiquez le produit.";
- if(!UN[l.unit])return`Unité inconnue « ${l.unit} ».`;
- if(!(l.qty>0))return"La quantité doit être supérieure à 0.";
- if(!(l.total>0))return"Le total payé doit être supérieur à 0.";
- if(!l.date||l.date>day(0))return"La date est invalide ou dans le futur.";
- if(l.exp&&!/^\d{4}-\d{2}-\d{2}$/.test(l.exp))return"Date de péremption invalide.";
- const fam=UN[l.unit].fam,up=+(l.total/(l.qty*UN[l.unit].f)).toFixed(4);
- const p=db.products.find(x=>x.restaurant===me.restaurant&&x.name.toLowerCase()===l.product.toLowerCase());
- if(p){if(FAM[p.unit]!==fam)return`« ${p.name} » est géré en ${p.unit} dans le catalogue : utilisez une unité compatible.`;p.price=up;p.qty=+((+p.qty||0)+l.qty*UN[l.unit].f/UN[p.unit].f).toFixed(3);if(l.exp)p.expiry=l.exp}
- else db.products.push({id:uid(),restaurant:me.restaurant,name:l.product,cat:CATS.includes(l.cat)?l.cat:"Autre",unit:fam==="n"?l.unit:BASEU[fam],price:up,qty:+(l.qty*UN[l.unit].f/UN[fam==="n"?l.unit:BASEU[fam]].f).toFixed(3),expiry:l.exp||""});
- db.purchases.push({id:uid(),restaurant:me.restaurant,date:l.date,supplier:l.supplier||"",product:p?p.name:l.product,qty:l.qty,unit:l.unit,total:l.total,unitPrice:up,baseUnit:p?p.unit:(fam==="n"?l.unit:BASEU[fam])});
- return null}
-PAGES.responsable.achats=()=>{const A=db.purchases.filter(a=>a.restaurant===me.restaurant);
- return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
- <input type="file" id="csvf" accept=".csv,.txt,text/csv" class="hidden">
- <div class="note">Le prix unitaire est calculé automatiquement (total payé ÷ quantité) et met à jour le catalogue, donc le coût des gaspillages. Chaque achat ajoute aussi la quantité au stock. Les factures PDF ou photos ne sont pas lues automatiquement dans cette version : la lecture automatique demande un service côté serveur, prévu avec Supabase. En attendant, saisissez les lignes ou importez un fichier CSV. Pour fixer un prix à la main, modifiez le produit dans le catalogue.</div>`+
- (A.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Fournisseur</th><th>Produit</th><th>Quantité</th><th>Total payé</th><th>Prix unitaire calculé</th><th>Action</th></tr></thead><tbody>`+
- A.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr><td>${fdate(a.date)}</td><td>${esc(a.supplier||"–")}</td><td><b>${esc(a.product)}</b></td><td>${num(a.qty)} ${esc(a.unit)}</td><td>${eur(a.total)}</td><td>${pfmt(a.unitPrice)} / ${esc(a.baseUnit)}</td><td><button class="btn danger sm" data-dela="${a.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun achat enregistré. Ajoutez une facture ligne par ligne ou importez un fichier CSV."))};
-function addPurchaseForm(){
- const P=db.products.filter(p=>p.restaurant===me.restaurant),f=$("#dform");
- f.innerHTML=`<h2>Ajouter un achat</h2>
- <label for="a_d">Date de la facture</label><input id="a_d" type="date" max="${day(0)}" value="${day(0)}" required>
- <label for="a_s">Fournisseur (facultatif)</label><input id="a_s" maxlength="60">
- <label for="a_p">Produit</label><input id="a_p" list="a_dl" maxlength="60" autocomplete="off" placeholder="Choisissez ou tapez un nouveau produit"><datalist id="a_dl">${P.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
- <label for="a_c">Catégorie (pour un nouveau produit)</label><select id="a_c">${CATS.map(c=>`<option>${esc(c)}</option>`).join("")}</select>
- <label for="a_q">Quantité achetée</label><div style="display:flex;gap:.5rem"><input id="a_q" type="number" min="0" step="any" inputmode="decimal" style="flex:1"><select id="a_u" style="flex:1" aria-label="Unité">${Object.keys(UN).map(u=>`<option ${u==="kg"?"selected":""}>${u}</option>`).join("")}</select></div>
- <label for="a_e">Date de péremption (facultatif)</label><input id="a_e" type="date">
- <label for="a_t">Total payé (€)</label><input id="a_t" type="number" min="0" step="any" inputmode="decimal">
- <p id="a_r" style="font-weight:700;margin:.6rem 0 0"></p>
- <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
- function calc(){const q=parseFloat($("#a_q").value),t=parseFloat($("#a_t").value),u=$("#a_u").value;
-  $("#a_r").textContent=(q>0&&t>0)?`Prix unitaire calculé : ${pfmt(t/(q*UN[u].f))} par ${BASEU[UN[u].fam]}`+(UN[u].f!==1?` (soit ${pfmt(t/q)} par ${u})`:""):"Prix unitaire calculé : –"}
- $("#a_p").oninput=()=>{const p=P.find(x=>x.name.toLowerCase()===$("#a_p").value.trim().toLowerCase());
-  if(p&&FAM[p.unit]!==UN[$("#a_u").value].fam)$("#a_u").value=p.unit;calc()};
- ["a_q","a_t"].forEach(i=>$("#"+i).oninput=calc);$("#a_u").onchange=calc;
- $("#fc").onclick=()=>$("#dlg").close();
- f.onsubmit=e=>{e.preventDefault();
-  const err=addPurchase({date:$("#a_d").value,supplier:$("#a_s").value.trim(),product:$("#a_p").value,cat:$("#a_c").value,qty:parseFloat($("#a_q").value),unit:$("#a_u").value,total:parseFloat($("#a_t").value),exp:$("#a_e").value});
-  if(err){toast(err,1);return}
-  const a=db.purchases[db.purchases.length-1];save();$("#dlg").close();route();toast(`Achat enregistré : ${pfmt(a.unitPrice)} par ${a.baseUnit}, catalogue mis à jour.`)};
- $("#dlg").showModal();
-}
-function parseCSV(text){
- const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).map((l,i)=>({l,n:i+1})).filter(x=>x.l.trim());
- if(lines.length<2)return{err:"Le fichier doit contenir une ligne d'en-têtes et au moins une ligne de données."};
- const d=lines[0].l.split(";").length>=lines[0].l.split(",").length?";":",";
- const split=s=>{const o=[];let c="",q=false;for(const ch of s){if(ch==='"')q=!q;else if(ch===d&&!q){o.push(c);c=""}else c+=ch}o.push(c);return o.map(x=>x.trim())};
- const H=split(lines[0].l).map(s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,""));
- const ix=(...k)=>H.findIndex(h=>k.includes(h));
- const c={date:ix("date"),sup:ix("fournisseur"),prod:ix("produit","article","designation"),qty:ix("quantite","qte"),unit:ix("unite"),tot:ix("total","totalpaye","montant","totalht","prixtotal"),cat:ix("categorie"),exp:ix("peremption","datedeperemption","dlc")};
- if(c.prod<0||c.qty<0||c.unit<0||c.tot<0)return{err:"Colonnes obligatoires manquantes : produit, quantite, unite, total."};
- const nb=s=>{s=String(s||"").replace(/[€\s]/g,"");if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");return parseFloat(s)};
- const dt=s=>{s=(s||"").trim();if(!s)return day(0);let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return s;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`:"invalide"};
- return{rows:lines.slice(1).map(x=>{const r=split(x.l),g=i=>i<0?"":(r[i]||"");
-  return{n:x.n,line:{date:dt(g(c.date)),supplier:g(c.sup),product:g(c.prod),cat:g(c.cat),qty:nb(g(c.qty)),unit:normUnit(g(c.unit)),total:nb(g(c.tot)),exp:g(c.exp)?dt(g(c.exp)):""}}})};
-}
-function importCSV(text){
- const res=parseCSV(text);if(res.err){infoBox("Import impossible",`<p>${esc(res.err)}</p>`);return}
- let ok=0;const errs=[];
- res.rows.forEach(r=>{const e=addPurchase(r.line);if(e)errs.push(`Ligne ${r.n} : ${e}`);else ok++});
- if(ok)save();route();
- infoBox("Import terminé",`<p><b>${ok}</b> ligne(s) importée(s), <b>${errs.length}</b> ignorée(s).</p>`+(errs.length?`<ul>${errs.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${errs.length>8?`<p>… et ${errs.length-8} autre(s).</p>`:""}`:"")+(ok?"<p>Les prix unitaires sont calculés et le catalogue est à jour.</p>":""))}
-WIRE["responsable.achats"]=()=>{
- $("#adda").onclick=addPurchaseForm;
- $("#csvm").onclick=()=>{const t="\uFEFFdate;fournisseur;produit;quantite;unite;total;categorie;peremption\n"+day(0)+";Grossiste Démo;Steak haché;10;kg;110;Viandes;"+day(5)+"\n"+day(0)+";Grossiste Démo;Pains burger;200;pièce;70;Boulangerie;"+day(3)+"\n";
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download="modele-achats.csv";a.click()};
- $("#csvi").onclick=()=>$("#csvf").click();
- $("#csvf").onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>1e6){toast("Fichier trop volumineux (1 Mo maximum).",1);return}
-  const r=new FileReader();r.onload=()=>importCSV(String(r.result));r.readAsText(file,"utf-8")};
- document.querySelectorAll("[data-dela]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cet achat","La ligne est retirée de l'historique ; le prix du catalogue n'est pas modifié.","Supprimer",()=>{db.purchases=db.purchases.filter(a=>a.id!==b.dataset.dela);save();route();toast("Achat supprimé.")}))};
-
-/* ========= Textes légaux (MODÈLES à faire relire avant tout usage réel) ========= */
-const CONSENT_VERSION="2026-10";
-const M=t=>`<mark style="background:var(--am2);padding:0 .2rem">[À compléter : ${t}]</mark>`;
-const LEGAL={
- mentions:["Mentions légales",()=>`<div class="note">Modèle à faire relire par un professionnel avant tout usage réel.</div>
- <p><b>Éditeur</b><br>${M("nom ou raison sociale, forme juridique, SIRET, adresse")}<br>Contact : ${M("adresse e-mail")}</p>
- <p><b>Directeur de la publication</b><br>${M("nom")}</p>
- <p><b>Hébergement du site</b><br>GitHub Pages – GitHub, Inc., San Francisco (États-Unis).</p>
- <p><b>Base de données et comptes (à venir)</b><br>Supabase – région d'hébergement : ${M("à confirmer, de préférence l'Union européenne")}.</p>
- <p><b>Statut actuel</b><br>Version de démonstration : toutes les données affichées sont fictives.</p>`],
- privacy:["Politique de confidentialité",()=>`<div class="note">Modèle à faire relire par un professionnel (RGPD) avant tout usage réel. Ne saisissez aucune donnée personnelle réelle tant que la plateforme n'est pas connectée à sa base sécurisée.</div>
- <p><b>Responsable du traitement</b><br>${M("nom ou raison sociale, adresse, e-mail de contact")}</p>
- <p><b>Données traitées</b><br>Identité professionnelle (nom, e-mail, téléphone facultatif), rôle et restaurant de rattachement, données d'activité saisies (produits, achats, gaspillages). Aucune donnée sensible n'est demandée.</p>
- <p><b>Finalités et bases légales</b><br>Traiter votre demande d'accès (consentement et mesures précontractuelles) ; fournir le service et gérer les comptes (exécution du contrat) ; assurer la sécurité (intérêt légitime).</p>
- <p><b>Destinataires</b><br>L'équipe de votre restaurant pour ses données, l'administrateur de la plateforme, et les prestataires techniques : hébergement du site (GitHub Pages) et base de données avec authentification (Supabase).</p>
- <p><b>Durée de conservation</b><br>Compte actif : pendant la durée d'utilisation puis ${M("durée, ex. 12 mois")}. Demandes d'accès refusées : ${M("durée, ex. 6 mois")}.</p>
- <p><b>Vos droits</b><br>Accès, rectification, effacement, limitation, portabilité et opposition, en écrivant à ${M("adresse e-mail")}. Vous pouvez aussi saisir la CNIL (cnil.fr).</p>
- <p><b>Stockage dans le navigateur</b><br>L'application utilise le stockage local du navigateur uniquement pour fonctionner (session, données de démonstration). Aucun cookie publicitaire ni traceur n'est utilisé.</p>`],
- cgu:["Conditions d'utilisation",()=>`<div class="note">Modèle à faire relire par un professionnel avant tout usage réel.</div>
- <p><b>Objet</b><br>AntiGaspiPro aide les restaurants et fast-foods à suivre leurs produits, leurs achats et leur gaspillage alimentaire.</p>
- <p><b>Accès</b><br>L'accès se fait sur invitation après validation d'une demande. Chaque compte est personnel : ne partagez pas votre mot de passe.</p>
- <p><b>Données saisies</b><br>Vous restez responsable de l'exactitude des données saisies. Les coûts, économies potentielles et économies réalisées sont des estimations indicatives, sans valeur contractuelle.</p>
- <p><b>Disponibilité</b><br>Pendant la phase de test, le service est fourni « en l'état », sans garantie de disponibilité.</p>
- <p><b>Droit applicable</b><br>Droit français. ${M("tribunal compétent, médiation éventuelle")}</p>`]
-};
-function showLegal(k){const [t,f]=LEGAL[k];infoBox(t,f())}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-legal]");if(b){e.preventDefault();showLegal(b.dataset.legal)}});
-
-/* ========= Demande d'accès (publique) ========= */
-function requestForm(){
- const f=$("#dform");
- f.innerHTML=`<h2>Demander un accès</h2><p style="color:var(--mute);font-size:.9rem">Réservé aux restaurants et fast-foods. L'administrateur examine votre demande, puis vous envoie une invitation.</p>
- <label for="q_n">Nom de l'établissement</label><input id="q_n" required maxlength="80">
- <label for="q_t">Type</label><select id="q_t"><option>Restaurant</option><option>Fast-food</option><option>Snack</option></select>
- <label for="q_v">Ville</label><input id="q_v" required maxlength="60">
- <label for="q_c">Nom du contact</label><input id="q_c" required maxlength="80">
- <label for="q_e">E-mail</label><input id="q_e" type="email" required maxlength="120">
- <label for="q_p">Téléphone (facultatif)</label><input id="q_p" type="tel" maxlength="30">
- <input id="q_h" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px">
- <label style="display:flex;gap:.5rem;align-items:flex-start;font-weight:400;margin-top:1rem"><input type="checkbox" id="q_ok" style="width:auto;margin-top:.25rem" required><span>J'accepte que ces informations soient utilisées pour traiter ma demande d'accès.</span></label>
- <small style="color:var(--mute)">Vos droits (accès, rectification, suppression) sont détaillés dans la politique de confidentialité, en bas de la page de connexion.</small>
- <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Envoyer la demande</button></div>`;
- $("#fc").onclick=()=>$("#dlg").close();
- f.onsubmit=e=>{e.preventDefault();
-  if($("#q_h").value){$("#dlg").close();return}
-  if(!$("#q_ok").checked){toast("Vous devez accepter le traitement de vos données pour envoyer la demande.",1);return}
-  db.requests.push({id:uid(),date:day(0),name:$("#q_n").value.trim(),type:$("#q_t").value,city:$("#q_v").value.trim(),contact:$("#q_c").value.trim(),email:$("#q_e").value.trim().toLowerCase(),phone:$("#q_p").value.trim(),status:"En attente",consent:true,consentAt:new Date().toISOString(),consentVersion:CONSENT_VERSION});
-  save();$("#dlg").close();toast("Demande envoyée. Démonstration : aucun e-mail n'est réellement envoyé.")};
- $("#dlg").showModal();
-}
-$("#reqopen").onclick=requestForm;
-
-/* ========= Administrateur : demandes d'accès ========= */
-PAGES.admin.demandes=()=>{const R=db.requests.slice().sort((a,b)=>b.date.localeCompare(a.date));
- const bd={"En attente":"b-fic","Acceptée":"b-ok","Refusée":"b-urg"};
- return`<h1>Demandes d'accès</h1><div class="note">Démonstration : l'e-mail d'invitation n'est pas envoyé. Avec Supabase, l'acceptation enverra une vraie invitation et le responsable choisira son mot de passe.</div>`+
- (R.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Établissement</th><th>Type</th><th>Ville</th><th>Contact</th><th>E-mail</th><th>Téléphone</th><th>Statut</th><th>Actions</th></tr></thead><tbody>`+
- R.map(q=>`<tr><td>${fdate(q.date)}</td><td><b>${esc(q.name)}</b></td><td>${esc(q.type)}</td><td>${esc(q.city)}</td><td>${esc(q.contact)}</td><td>${esc(q.email)}</td><td>${esc(q.phone||"–")}</td><td><span class="badge ${bd[q.status]}">${esc(q.status)}</span></td><td>${q.status==="En attente"?`<button class="btn sm" data-acc="${q.id}">Accepter</button> <button class="btn sec sm" data-ref="${q.id}">Refuser</button> `:""}<button class="btn danger sm" data-delq="${q.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucune demande pour le moment."))};
-WIRE["admin.demandes"]=()=>{
- document.querySelectorAll("[data-acc]").forEach(b=>b.onclick=()=>{const q=db.requests.find(x=>x.id===b.dataset.acc),email=q.email.toLowerCase();
-  if(db.users.some(u=>u.email===email)){toast("Cette adresse e-mail est déjà utilisée par un compte.",1);return}
-  const id="r"+uid();db.restaurants.push({id,name:q.name,type:q.type,city:q.city,status:"Actif"});
-  db.users.push({email,name:q.contact,role:"responsable",restaurant:id});q.status="Acceptée";save();route();toast(`Restaurant créé. Invitation simulée pour ${email}.`)});
- document.querySelectorAll("[data-ref]").forEach(b=>b.onclick=()=>{db.requests.find(x=>x.id===b.dataset.ref).status="Refusée";save();route();toast("Demande refusée.")});
- document.querySelectorAll("[data-delq]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cette demande","Les données de contact de cette demande seront effacées.","Supprimer",()=>{db.requests=db.requests.filter(x=>x.id!==b.dataset.delq);save();route();toast("Demande supprimée.")}))};
-
-/* ========= Employé ========= */
-const mineE=()=>mineW().filter(w=>w.by===me.email).sort((a,b)=>b.date.localeCompare(a.date));
-PAGES.employe.saisie=()=>{const W=mineE();
- return`<h1>Enregistrer un gaspillage</h1><div class="note">Saisie rapide : tout se choisit dans des listes. Le coût est calculé automatiquement avec le prix du catalogue.</div>
- <div class="card"><form id="fastForm" class="fast"></form></div>
- <div class="grid" style="margin-top:1.2rem">${stat(W.filter(w=>ago(w.date)===0).length,"saisies aujourd'hui")}${stat(W.length,"saisies au total")}</div>
- <h2>Mes dernières saisies</h2>`+wasteTable(W.slice(0,8))};
-WIRE["employe.saisie"]=()=>mountWasteForm($("#fastForm"),false);
-PAGES.employe.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
- return`<h1>Catalogue du restaurant</h1><div class="note">Consultation seule : seul le responsable modifie le catalogue.</div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Péremption</th><th>Prix unitaire</th></tr></thead><tbody>`+
- P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${expBadge(p.expiry)}</td><td>${pfmt(p.price)} / ${esc(p.unit)}</td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide."))};
-PAGES.employe.mesgaspillages=()=>`<h1>Mes saisies</h1>`+wasteTable(mineE(),{del:1});
-WIRE["employe.mesgaspillages"]=()=>wireDelW();
-
-boot();
+window.bibliothequePrete=new Promise(function(resolve,reject){
+ var status=document.createElement('p');status.id='etatTechnique';status.style.cssText='padding:12px;background:#fcf1d9;border-radius:8px';status.textContent='Chargement de la connexion…';document.getElementById('lform').appendChild(status);
+ var sources=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js','https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
+ function load(i){if(i===sources.length){status.textContent='Bibliothèque inaccessible : vérifiez votre réseau.';reject(Error(status.textContent));return;}var tag=document.createElement('script'),done=false;var timer=setTimeout(function(){finish(false)},10000);function finish(ok){if(done)return;done=true;clearTimeout(timer);if(ok&&window.supabase)resolve();else load(i+1);}tag.onload=function(){finish(true)};tag.onerror=function(){finish(false)};tag.src=sources[i];document.head.appendChild(tag);}load(0);
+});
+window.bibliothequePrete.catch(function(){});
 </script>
-</body>
-</html>
+<script>
+"use strict";
+const URL_PROJET="https://fsscahhpgdaaavzwmeef.supabase.co";
+const CLE_PUBLIQUE="sb_publishable_NcsiR8h1F5UpsfsFVAdVmQ_sOlyx4Ge";
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const euro=v=>Number(v||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:4});
+const jour=(offset=0)=>{const d=new Date();d.setDate(d.getDate()+offset);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+let client,user,profil,page='accueil',data={};
+const roles={admin:'Administrateur',responsable:'Responsable',employe:'Employé'};
+const units=['kg','g','L','mL','pièce','portion'];
+const motifs=['Invendu en fin de service','Date dépassée','Surproduction','Erreur de préparation','Produit abîmé','Retour client','Restes d’assiette','Chaîne du froid rompue'];
+function etat(t){const el=document.getElementById('etatTechnique');if(el)el.textContent=t;}
+async function attente(p){let timer;try{return await Promise.race([p,new Promise((_,rej)=>timer=setTimeout(()=>rej(Error('Délai dépassé : la requête ne répond pas.')),20000))])}finally{clearTimeout(timer)}}
+function erreur(e){etat(e.message||String(e));$('#errbox').textContent='Erreur : '+(e.message||e);$('#errbox').classList.remove('hidden')}
+function toast(t){const n=document.createElement('div');n.className='t';n.textContent=t;$('#toast').append(n);setTimeout(()=>n.remove(),4500)}
+async function run(f){$('#errbox').classList.add('hidden');try{await f()}catch(e){erreur(e)}}
+window.addEventListener('error',e=>erreur(e.error||e.message));
+window.addEventListener('unhandledrejection',e=>erreur(e.reason));
+async function lire(table){let all=[];for(let start=0;;start+=500){const {data:d,error}=await client.from(table).select('*').order('id').range(start,start+499);if(error)throw error;all.push(...d);if(d.length<500)return all}}
+async function charger(){
+ const tables=['restaurants','products','waste_logs'];
+ if(profil.role!=='employe')tables.push('purchases');
+ if(profil.role==='admin')tables.push('access_requests','profiles');
+ const vals=await Promise.all(tables.map(lire));data={};tables.forEach((t,i)=>data[t]=vals[i]);
+}
+async function ecrire(table,obj,id){const q=id?client.from(table).update(obj).eq('id',id):client.from(table).insert(obj);const {data:d,error}=await q.select('id');if(error)throw error;if(!d?.length)throw Error('Aucune ligne enregistrée. Vérifiez les droits RLS.');await charger();afficher();toast('Enregistrement confirmé dans Supabase.');}
+async function supprimer(table,id){if(!confirm('Supprimer cette ligne ? Cette opération concerne la base Supabase.'))return;const {data:d,error}=await client.from(table).delete().eq('id',id).select('id');if(error)throw error;if(!d?.length)throw Error('Suppression refusée ou ligne introuvable.');await charger();afficher();toast('Suppression confirmée.');}
+function formulaire(titre,champs,initial,submit){
+ $('#dform').innerHTML='<h2>'+esc(titre)+'</h2>'+champs.map(c=>{
+ const v=initial[c.k]??'';let field;
+ if(c.options)field='<select id="f_'+c.k+'">'+c.options.map(o=>{const a=Array.isArray(o)?o:[o,o];return '<option value="'+esc(a[0])+'" '+(String(a[0])===String(v)?'selected':'')+'>'+esc(a[1])+'</option>'}).join('')+'</select>';
+ else field='<input id="f_'+c.k+'" type="'+(c.type||'text')+'" value="'+esc(v)+'" '+(c.type==='number'?'min="0" step="any"':'')+' '+(c.optional?'':'required')+'>';
+ return '<label for="f_'+c.k+'">'+esc(c.label)+'</label>'+field;
+ }).join('')+'<div id="dialogError" class="err hidden"></div><div class="acts"><button type="button" class="btn sec" id="annuler">Annuler</button><button class="btn" id="valider">Enregistrer</button></div>';
+ $('#annuler').onclick=()=>$('#dlg').close();
+ $('#dform').onsubmit=async e=>{e.preventDefault();const b=$('#valider');b.disabled=true;try{const v={};champs.forEach(c=>v[c.k]=c.type==='number'?Number($('#f_'+c.k).value):$('#f_'+c.k).value.trim());await submit(v);$('#dlg').close()}catch(e){$('#dialogError').textContent=e.message||e;$('#dialogError').classList.remove('hidden')}finally{b.disabled=false}};
+ $('#dlg').showModal();
+}
+function tableau(headers,rows){return rows.length?'<div class="tw"><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'<div class="card empty">Aucune donnée enregistrée dans Supabase.</div>'}
+function carte(v,l){return '<div class="card stat"><b>'+v+'</b><span>'+l+'</span></div>'}
+const nomRestaurant=id=>data.restaurants?.find(r=>r.id===id)?.name||'Restaurant non accessible';
+function volume(list){let q={};list.forEach(w=>{let u=w.unit,n=Number(w.quantity);if(u==='g'||u==='g'){u='kg';n/=1000}q[u]=(q[u]||0)+n});return Object.entries(q).map(([u,n])=>n.toLocaleString('fr-FR')+' '+esc(u)).join(' · ')||'0'}
+const cout=list=>list.reduce((a,w)=>a+Number(w.estimated_cost),0);
+const current=list=>list.filter(w=>w.wasted_on>=jour(-29)&&w.wasted_on<=jour());
+const previous=list=>list.filter(w=>w.wasted_on>=jour(-59)&&w.wasted_on<jour(-29));
+function bilan(){let all=data.waste_logs||[],w=current(all),p=previous(all);let diff=cout(p)-cout(w);
+ return '<h1>'+ (profil.role==='admin'?'Vue globale de la plateforme':'Tableau de bord du restaurant')+'</h1><div class="note">Données réellement enregistrées dans Supabase. Période actuelle : '+jour(-29)+' au '+jour()+'. Comparaison : '+jour(-59)+' au '+jour(-30)+'. Une baisse des pertes enregistrées ne prouve pas une économie de trésorerie ; elle dépend aussi de l’activité et de la qualité des saisies.</div><div class="grid">'+carte(euro(cout(w)),'Coût des pertes — 30 jours')+carte(volume(w),'Quantités gaspillées, unités séparées')+carte(w.length,'Saisies — 30 jours')+carte(euro(cout(w)*.2),'Économies potentielles : hypothèse −20 %, non réalisées')+carte(p.length?euro(diff):'Historique insuffisant','Baisse des pertes vs 30 jours précédents (négatif = hausse)')+'</div>'+ (profil.role==='admin'?tableau(['Restaurant','Volumes — 30 jours','Pertes — 30 jours','Baisse des pertes'],data.restaurants.map(r=>{let a=all.filter(x=>x.restaurant_id===r.id),c=current(a),b=previous(a);return [esc(r.name),volume(c),euro(cout(c)),b.length?euro(cout(b)-cout(c)):'Historique insuffisant']})):'')+evolution(all);
+}
+function evolution(all){let days={};current(all).forEach(w=>days[w.wasted_on]=(days[w.wasted_on]||0)+Number(w.estimated_cost));return '<h2>Évolution du coût des pertes</h2>'+tableau(['Date','Coût'],Object.entries(days).sort().map(([d,c])=>[esc(d),euro(c)]))}
+const restFields=[{k:'name',label:'Nom du restaurant'},{k:'type',label:'Type',options:['Restaurant','Fast-food','Snack']},{k:'city',label:'Ville'}];
+const prodFields=[{k:'name',label:'Nom'},{k:'category',label:'Catégorie',options:['Viandes','Poissons','Fruits et légumes','Produits laitiers','Boulangerie','Plats préparés','Autre']},{k:'unit',label:'Unité du prix',options:['kg','L','pièce','portion']},{k:'unit_cost',label:'Coût d’achat par unité (€)',type:'number'},{k:'stock_qty',label:'Stock',type:'number'},{k:'expiry_date',label:'Date de péremption',type:'date',optional:true}];
+function afficher(){
+ const admin=profil.role==='admin',resp=profil.role==='responsable';
+ const menus=admin?[['accueil','Vue globale'],['restaurants','Restaurants inscrits'],['demandes','Demandes d’accès'],['catalogue','Catalogue (lecture)'],['pertes','Gaspillages'],['achats','Achats (lecture)']]:resp?[['accueil','Tableau de bord'],['catalogue','Catalogue produits'],['saisie','Enregistrer un gaspillage'],['pertes','Gaspillages'],['achats','Achats et factures']]:[['saisie','Enregistrer un gaspillage'],['catalogue','Catalogue du restaurant'],['pertes','Mes saisies']];
+ if(!menus.some(m=>m[0]===page))page=menus[0][0];
+ $('#nav').innerHTML=menus.map(([p,l])=>'<a href="#/'+p+'" data-page="'+p+'" class="'+(p===page?'on':'')+'">'+l+'</a>').join('')+'<button class="btn sec sm" id="actualiser">Actualiser depuis Supabase</button>';
+ $('#actualiser').onclick=()=>run(async()=>{await charger();afficher()});
+ document.querySelectorAll('[data-page]').forEach(a=>a.onclick=e=>{e.preventDefault();page=a.dataset.page;history.replaceState(null,'','#/'+page);$('#side').classList.remove('open');afficher()});
+ let h='';
+ if(page==='accueil')h=bilan();
+ if(page==='restaurants')h='<div class="bar-top"><h1>Restaurants inscrits</h1><button class="btn" id="addrest">Ajouter un restaurant</button></div><div class="note">Créer un restaurant ne crée pas de compte utilisateur. Les invitations nécessitent un service sécurisé côté serveur. La suspension est enregistrée ; les règles RLS actuelles ne bloquent pas encore toutes les opérations des comptes déjà connectés.</div>'+tableau(['Restaurant','Type','Ville','Statut','Actions'],data.restaurants.map(r=>[esc(r.name),esc(r.type),esc(r.city),esc(r.status),'<button class="btn sec sm" data-restedit="'+r.id+'">Modifier</button> <button class="btn sec sm" data-toggle="'+r.id+'">'+(r.status==='Actif'?'Suspendre':'Réactiver')+'</button> <button class="btn danger sm" data-del="restaurants" data-id="'+r.id+'">Supprimer</button>']));
+ if(page==='catalogue')h='<div class="bar-top"><h1>Catalogue du restaurant</h1>'+(resp?'<button class="btn" id="addprod">Ajouter un produit</button>':'')+'</div>'+tableau(['Produit','Restaurant','Stock','Péremption','Prix / unité',...(resp?['Actions']:[])],data.products.map(p=>{let urgent=p.expiry_date&&p.expiry_date<=jour(2);return [esc(p.name),esc(nomRestaurant(p.restaurant_id)),esc(p.stock_qty)+' '+esc(p.unit),esc(p.expiry_date||'Non renseignée')+(urgent?' <span class="badge b-urg">À surveiller</span>':''),euro(p.unit_cost)+' / '+esc(p.unit),...(resp?['<button class="btn sec sm" data-prodedit="'+p.id+'">Modifier</button> <button class="btn danger sm" data-del="products" data-id="'+p.id+'">Supprimer</button>']:[])]}));
+ if(page==='pertes')h='<h1>'+ (admin?'Tous les gaspillages':resp?'Gaspillages du restaurant':'Mes saisies')+'</h1>'+tableau(['Date','Restaurant','Produit','Quantité','Motif','Coût',...(admin||resp?['Action']:[])],(data.waste_logs||[]).slice().sort((a,b)=>b.wasted_on.localeCompare(a.wasted_on)).map(w=>[esc(w.wasted_on),esc(nomRestaurant(w.restaurant_id)),esc(w.product_name),esc(w.quantity)+' '+esc(w.unit),esc(w.reason),euro(w.estimated_cost),...(admin||resp?['<button class="btn danger sm" data-del="waste_logs" data-id="'+w.id+'">Supprimer</button>']:[])]));
+ if(page==='saisie')h='<h1>Enregistrer un gaspillage</h1><div class="card"><form id="fast" class="fast"></form></div>';
+ if(page==='achats')h='<div class="bar-top"><h1>Achats et factures</h1>'+(resp?'<div><button class="btn" id="addpurchase">Ajouter un achat</button> <button class="btn sec" id="importcsv">Importer CSV</button> <button class="btn sec" id="modele">Modèle CSV</button><input type="file" id="csvfile" accept=".csv" class="hidden"></div>':'')+'</div><div class="note">Import CSV uniquement, pas de reconnaissance des PDF ou photos. Chaque ligne calcule total ÷ quantité ; le catalogue est mis à jour dans une deuxième opération. Les deux opérations ne sont pas encore transactionnelles.</div>'+tableau(['Date','Produit','Quantité','Total','Coût / unité',...(resp?['Action']:[])],(data.purchases||[]).map(a=>[esc(a.purchased_on),esc(a.product_name),esc(a.quantity)+' '+esc(a.unit),euro(a.total_paid),euro(a.unit_price)+' / '+esc(a.unit),...(resp?['<button class="btn danger sm" data-del="purchases" data-id="'+a.id+'">Supprimer</button>']:[])]));
+ if(page==='demandes')h='<h1>Demandes d’accès</h1><div class="note">Vous pouvez consulter et refuser les demandes. L’acceptation avec création de compte et invitation n’est pas encore configurée ; aucune invitation fictive n’est envoyée.</div>'+tableau(['Restaurant','Contact','Email','Téléphone','Statut','Actions'],(data.access_requests||[]).map(a=>[esc(a.restaurant_name),esc(a.contact_name),esc(a.email),esc(a.phone),esc(a.status),'<button class="btn sec sm" data-refuse="'+a.id+'">Refuser</button> <button class="btn danger sm" data-del="access_requests" data-id="'+a.id+'">Supprimer</button>']));
+ $('#view').innerHTML=h;
+ document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>run(()=>supprimer(b.dataset.del,b.dataset.id)));
+ document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>run(()=>{const r=data.restaurants.find(x=>x.id===b.dataset.toggle);return ecrire('restaurants',{status:r.status==='Actif'?'Suspendu':'Actif'},r.id)}));
+ document.querySelectorAll('[data-restedit]').forEach(b=>b.onclick=()=>{const r=data.restaurants.find(x=>x.id===b.dataset.restedit);formulaire('Modifier le restaurant',restFields,r,v=>ecrire('restaurants',v,r.id))});
+ if($('#addrest'))$('#addrest').onclick=()=>formulaire('Ajouter un restaurant',restFields,{},v=>ecrire('restaurants',{...v,status:'En attente'}));
+ const editProd=(p)=>formulaire(p?'Modifier le produit':'Ajouter un produit',prodFields,p||{unit:'kg',stock_qty:0,unit_cost:0},v=>{if(!(v.unit_cost>0))throw Error('Le coût unitaire doit être supérieur à zéro.');v.expiry_date=v.expiry_date||null;return ecrire('products',{...v,restaurant_id:profil.restaurant_id},p?.id)});
+ if($('#addprod'))$('#addprod').onclick=()=>editProd(null);
+ document.querySelectorAll('[data-prodedit]').forEach(b=>b.onclick=()=>editProd(data.products.find(x=>x.id===b.dataset.prodedit)));
+ document.querySelectorAll('[data-refuse]').forEach(b=>b.onclick=()=>run(()=>ecrire('access_requests',{status:'Refusée'},b.dataset.refuse)));
+ if(page==='saisie')saisie();
+ if(resp&&page==='achats')achats();
+}
+function compat(unit){return unit==='kg'||unit==='grammes'||unit==='g'?['kg','g']:unit==='L'||unit==='mL'?['L','mL']:[unit]}
+function montant(p,q,u){if(!compat(p.unit).includes(u))throw Error('Unité incompatible avec le prix du catalogue. Une portion doit avoir son propre prix, ou un poids défini.');let ratio=1;if(p.unit==='kg'&&u==='g')ratio=.001;if((p.unit==='grammes'||p.unit==='g')&&u==='kg')ratio=1000;if(p.unit==='L'&&u==='mL')ratio=.001;if(p.unit==='mL'&&u==='L')ratio=1000;return q*Number(p.unit_cost)*ratio}
+function saisie(){const ps=data.products||[];if(!ps.length){$('#fast').innerHTML='<p>Catalogue vide : demandez au responsable d’ajouter des produits.</p>';return}
+ $('#fast').innerHTML='<label for="wp">Produit</label><select id="wp">'+ps.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select><label for="wq">Quantité exacte</label><input id="wq" type="number" min="0.0001" step="any" inputmode="decimal" required placeholder="Exemple : 250"><label for="wu">Unité compatible</label><select id="wu"></select><label for="wr">Raison</label><select id="wr">'+motifs.map(m=>'<option>'+esc(m)+'</option>').join('')+'</select><label for="wd">Date</label><select id="wd">'+Array.from({length:31},(_,i)=>'<option value="'+jour(-i)+'">'+(i===0?'Aujourd’hui':i===1?'Hier':jour(-i))+'</option>').join('')+'</select><p id="wc" class="cost"></p><button class="btn big">Enregistrer le gaspillage</button>';
+ const p=()=>ps.find(x=>x.id===$('#wp').value);
+ const calc=()=>{const q=Number($('#wq').value);$('#wc').textContent=q>0?'Coût estimé : '+euro(montant(p(),q,$('#wu').value)):'Entrez la quantité';};
+ const unit=()=>{$('#wu').innerHTML=compat(p().unit).map(u=>'<option>'+esc(u)+'</option>').join('');$('#wu').value=p().unit==='g'?'grammes':p().unit;calc()};
+ $('#wp').onchange=unit;$('#wu').onchange=calc;$('#wq').oninput=calc;unit();
+ $('#fast').onsubmit=e=>{e.preventDefault();run(async()=>{const b=$('#fast button');b.disabled=true;try{const prod=p(),q=Number($('#wq').value);if(!(q>0))throw Error('Quantité invalide');await ecrire('waste_logs',{restaurant_id:profil.restaurant_id,product_id:prod.id,product_name:prod.name,quantity:q,unit:$('#wu').value,estimated_cost:Number(montant(prod,q,$('#wu').value).toFixed(2)),reason:$('#wr').value,wasted_on:$('#wd').value,created_by:user.id});}finally{if(b.isConnected)b.disabled=false}})};
+}
+async function achat(v){
+ if(!(v.quantity>0)||!(v.total_paid>0)||!units.includes(v.unit))throw Error('Quantité, unité ou total invalide.');
+ let p=data.products.find(p=>p.restaurant_id===profil.restaurant_id&&p.name.toLowerCase()===v.product_name.toLowerCase());
+ if(p&&!compat(p.unit).includes(v.unit))throw Error('Unité d’achat incompatible avec le produit '+v.product_name);
+ const price=v.total_paid/v.quantity;
+ const {error}=await client.from('purchases').insert({...v,restaurant_id:profil.restaurant_id,created_by:user.id,unit_price:price});if(error)throw error;
+ let converted=price;if(p?.unit==='kg'&&v.unit==='g')converted*=1000;if((p?.unit==='grammes'||p?.unit==='g')&&v.unit==='kg')converted/=1000;
+ const q=p?client.from('products').update({unit_cost:converted}).eq('id',p.id):client.from('products').insert({restaurant_id:profil.restaurant_id,name:v.product_name,category:'Autre',unit:v.unit,unit_cost:price,stock_qty:0,expiry_date:null});
+ const {error:err}=await q;if(err)throw Error('Achat enregistré, mais prix du catalogue non mis à jour : '+err.message);
+ await charger();
+}
+function achats(){
+ const fields=[{k:'purchased_on',label:'Date de facture',type:'date'},{k:'supplier',label:'Fournisseur',optional:true},{k:'product_name',label:'Nom exact du produit'},{k:'quantity',label:'Quantité achetée',type:'number'},{k:'unit',label:'Unité',options:units},{k:'total_paid',label:'Total de la ligne (€), même base HT ou TTC pour tout le catalogue',type:'number'}];
+ $('#addpurchase').onclick=()=>formulaire('Ajouter une ligne de facture',fields,{purchased_on:jour(),unit:'kg'},async v=>{await achat(v);afficher();toast('Achat et prix enregistrés.');});
+ $('#modele').onclick=()=>{const blob=new Blob(['purchased_on;supplier;product_name;quantity;unit;total_paid\n'+jour()+';Grossiste;Frites surgelées;10;kg;22\n'],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='modele-achats.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+ $('#importcsv').onclick=()=>$('#csvfile').click();
+ $('#csvfile').onchange=e=>run(async()=>{const f=e.target.files[0];if(!f)return;if(f.size>1000000)throw Error('Maximum 1 Mo.');const rows=(await f.text()).replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());const head=rows.shift().split(';').map(x=>x.trim());const needed=fields.map(x=>x.k);if(needed.some(x=>!head.includes(x)))throw Error('Utilisez le modèle CSV fourni (séparateur point-virgule).');let ok=0,errs=[];for(let i=0;i<rows.length;i++){const cols=rows[i].split(';');if(cols.length!==head.length){errs.push('Ligne '+(i+2)+' : colonnes invalides');continue}let v={};head.forEach((k,j)=>v[k]=cols[j].trim());v.quantity=Number(v.quantity.replace(',','.'));v.total_paid=Number(v.total_paid.replace(',','.'));try{await achat(v);ok++}catch(e){errs.push('Ligne '+(i+2)+' : '+e.message)}}afficher();toast(ok+' ligne(s) traitée(s).');if(errs.length)throw Error(errs.join('\n'))});
+}
+async function ouvrir(){
+ const {data:d,error}=await client.auth.getUser();if(error)throw error;user=d.user;if(!user)return;
+ const {data:p,error:err}=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(err)throw err;if(!p)throw Error('Compte authentifié mais profil introuvable. Contactez l’administrateur.');profil=p;
+ if(!roles[p.role])throw Error('Rôle de profil invalide.');
+ await charger();
+ if(p.role!=='admin'){const r=data.restaurants.find(r=>r.id===p.restaurant_id);if(!r)throw Error('Aucun restaurant associé ou accès refusé.');if(r.status!=='Actif')throw Error('Votre restaurant n’est pas actif. Contactez l’administrateur.');}
+ $('#uname').textContent=p.full_name||user.email;$('#urole').textContent=roles[p.role];$('#urest').textContent=p.role==='admin'?'Tous les restaurants':nomRestaurant(p.restaurant_id);
+ $('#login').classList.add('hidden');$('#app').classList.remove('hidden');$('#demobar').textContent='Connexion Supabase active — données chargées selon vos droits. Version pilote, invitations non configurées.';
+ page=location.hash.replace('#/','')||'accueil';afficher();
+}
+$('#lform').onsubmit=e=>{e.preventDefault();run(async()=>{const b=$('#lform button');b.disabled=true;$('#lerr').classList.add('hidden');try{etat('Connexion en cours…');if(!client)throw Error('Connexion pas encore prête. Attendez le message Prêt.');const {error}=await attente(client.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value}));if(error)throw error;etat('Identifiants acceptés : chargement du profil…');await attente(ouvrir());etat('Connexion réussie.');}catch(e){$('#lerr').textContent=e.message;$('#lerr').classList.remove('hidden');throw e}finally{b.disabled=false}})};
+$('#logout').onclick=()=>run(async()=>{const {error}=await client.auth.signOut();if(error)throw error;user=null;profil=null;data={};$('#app').classList.add('hidden');$('#login').classList.remove('hidden');$('#pw').value='';$('#demobar').textContent='Supabase configuré — connectez-vous avec votre compte personnel.'});
+$('#burger').onclick=()=>$('#side').classList.toggle('open');
+$('#reqopen').onclick=()=>formulaire('Demander un accès — aucune inscription automatique',[{k:'restaurant_name',label:'Restaurant'},{k:'type',label:'Type',options:['Restaurant','Fast-food','Snack']},{k:'city',label:'Ville'},{k:'contact_name',label:'Contact'},{k:'email',label:'Email',type:'email'},{k:'phone',label:'Téléphone',optional:true},{k:'consent',label:'J’accepte le traitement de ces informations pour ma demande',options:[['non','Choisir'],['oui','Oui']]}],{},async v=>{if(v.consent!=='oui')throw Error('Consentement requis.');const {error}=await client.from('access_requests').insert({...v,status:'En attente',consent:true,consent_at:new Date().toISOString(),consent_version:'pilote-2026-10'});if(error)throw error;toast('Demande enregistrée. Aucun compte ni invitation créé.');});
+ document.querySelectorAll('[data-legal]').forEach(b=>b.onclick=()=>{ $('#dform').innerHTML='<h2>Information — version pilote</h2><p>Les mentions légales, conditions et informations de confidentialité définitives doivent être complétées par l’éditeur avant ouverture au public. Les demandes d’accès sont stockées dans le projet Supabase pour être examinées par l’administrateur. Ne transmettez pas de données sensibles.</p><button class="btn" type="button" id="fermer">Fermer</button>';$('#fermer').onclick=()=>$('#dlg').close();$('#dlg').showModal();});
+run(async()=>{await window.bibliothequePrete;if(!window.supabase)throw Error('Impossible de charger la bibliothèque Supabase. Vérifiez votre connexion ou votre bloqueur.');client=window.supabase.createClient(URL_PROJET,CLE_PUBLIQUE);$('#demobar').textContent='Supabase configuré — connexion personnelle requise, pas de données fictives.';const {data:d,error}=await attente(client.auth.getSession());if(error)throw error;if(d.session)await attente(ouvrir());else etat('Prêt : saisissez votre e-mail et votre mot de passe Supabase.');});
+
+</script>
+</body></html>
