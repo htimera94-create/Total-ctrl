@@ -134,6 +134,9 @@ window.onerror=(m,s,l)=>{const b=document.getElementById("errbox");b.classList.r
    L'URL du projet et la clé « publishable » sont publiques par conception (la sécurité repose sur les règles RLS).
    N'écrivez JAMAIS ici la clé « secret » (sb_secret_…) ni « service_role », ni un mot de passe. */
 const CFG={supabaseUrl:"https://fsscahhpgdaaavzwmeef.supabase.co",supabaseKey:"sb_publishable_NcsiR8h1F5UpsfsFVAdVmQ_sOlyx4Ge"};
+/* Informations légales : renseignez-les ici UNE fois ; elles apparaissent dans les mentions légales et la politique de confidentialité.
+   Tant qu'un champ est vide, le texte affiche « À compléter ». */
+const LEGAL_INFO={editeur:"",statut:"",siret:"",adresse:"",email:"",directeur:"",regionBase:"",fournisseurEmail:"",dureeComptes:"",dureeDemandes:"6 mois"};
 let SB=null,DEMO=true;
 const showErr=m=>{const b=document.getElementById("errbox");b.classList.remove("hidden");b.textContent=m};
 window.addEventListener("unhandledrejection",e=>showErr("Erreur : "+((e.reason&&e.reason.message)||e.reason)));
@@ -339,8 +342,8 @@ PAGES.admin.accueil=()=>{const W=db.wastes,W30=last30(W),R=db.restaurants,c=sum(
  <div class="card"><h2>Détail par restaurant (30 jours)</h2><div class="tw"><table><thead><tr><th>Restaurant</th><th>Statut</th><th>Volume gaspillé</th><th>Coût</th><th>Économies potentielles</th><th>Baisse des pertes</th></tr></thead><tbody>`+
  R.map(r=>{const w=W.filter(x=>x.restaurant===r.id),w30=last30(w),cc=sum(w30,x=>x.cost),e=eco(w);
   return`<tr><td><b>${esc(r.name)}</b></td><td><span class="badge ${r.status==="Actif"?"b-ok":"b-urg"}">${esc(r.status)}</span></td><td>${volTxt(w30)}</td><td>${eur(cc)}</td><td>${eur(cc*.2)}</td><td>${e.v===null?"–":eur(e.v)}</td></tr>`}).join("")+`</tbody></table></div></div>`};
-PAGES.admin.gaspillages=()=>`<h1>Gaspillages de la plateforme</h1>`+wasteTable(db.wastes,{rest:1,del:1});
-WIRE["admin.gaspillages"]=()=>wireDelW();
+PAGES.admin.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages de la plateforme</h1><button class="btn sec" id="expw">Exporter en CSV</button></div>`+wasteTable(db.wastes,{rest:1,del:1});
+WIRE["admin.gaspillages"]=()=>{$("#expw").onclick=()=>exportWastes(db.wastes);wireDelW()};
 PAGES.admin.rapports=()=>{const W30=last30(db.wastes),c=sum(W30,w=>w.cost);
  return`<h1>Rapports de la plateforme</h1><div class="grid">${stat(eur(c),"coût total (30 jours)")}${stat(W30.length,"saisies (30 jours)")}${potStat(c)}${ecoStat(db.wastes)}</div>
  <div class="card"><h2>Coût par restaurant</h2>${bars(group(W30,w=>rest(w.restaurant).name,w=>w.cost))}</div><br>
@@ -377,8 +380,8 @@ PAGES.responsable.accueil=()=>{const W=mineW(),W30=last30(W),v=variation(W),c=su
  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"><div class="card"><h2>Coût par raison</h2>${bars(group(W30,w=>w.reason,w=>w.cost))}</div>
  <div class="card"><h2>Produits les plus gaspillés</h2>${bars(group(W30,w=>w.product,w=>w.cost))}</div></div>`};
 WIRE["responsable.accueil"]=()=>{$("#addw").onclick=addWaste;$("#goachats").onclick=()=>location.hash="#/achats";$("#gocat").onclick=()=>location.hash="#/catalogue"};
-PAGES.responsable.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages</h1><button class="btn" id="addw">Enregistrer un gaspillage</button></div>`+wasteTable(mineW(),{del:1});
-WIRE["responsable.gaspillages"]=()=>{$("#addw").onclick=addWaste;wireDelW()};
+PAGES.responsable.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="expw">Exporter en CSV</button><button class="btn" id="addw">Enregistrer un gaspillage</button></div></div>`+wasteTable(mineW(),{del:1});
+WIRE["responsable.gaspillages"]=()=>{$("#expw").onclick=()=>exportWastes(mineW());$("#addw").onclick=addWaste;wireDelW()};
 const prodFields=[{k:"name",l:"Nom du produit"},{k:"cat",l:"Catégorie",opts:CATS},{k:"unit",l:"Unité",opts:UNITS},{k:"price",l:"Coût d'achat par unité (€)",t:"number",pos:1},{k:"qty",l:"Stock actuel (dans l'unité du produit, facultatif)",t:"number",opt:1},{k:"expiry",l:"Date de péremption (facultative)",t:"date",opt:1}];
 PAGES.responsable.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
  return`<div class="bar-top"><h1>Catalogue produits</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="addstd">Importer les produits types</button><button class="btn" id="addp">Ajouter un produit</button></div></div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Stock</th><th>Péremption</th><th>Coût unitaire</th><th>Actions</th></tr></thead><tbody>`+
@@ -426,7 +429,7 @@ function addPurchase(l){
  db.purchases.push({id:uid(),restaurant:me.restaurant,date:l.date,supplier:l.supplier||"",product:p?p.name:l.product,qty:l.qty,unit:l.unit,total:l.total,unitPrice:up,baseUnit:p?p.unit:(fam==="n"?l.unit:BASEU[fam])});
  return null}
 PAGES.responsable.achats=()=>{const A=db.purchases.filter(a=>a.restaurant===me.restaurant);
- return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
+ return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="expa">Exporter mes achats</button> <button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
  <input type="file" id="csvf" accept=".csv,.txt,text/csv" class="hidden">
  <div class="note">Le prix unitaire est calculé automatiquement (total payé ÷ quantité) et met à jour le catalogue, donc le coût des gaspillages. Chaque achat ajoute aussi la quantité au stock. Les factures PDF ou photos ne sont pas lues automatiquement dans cette version : la lecture automatique demande un service côté serveur, prévu avec Supabase. En attendant, saisissez les lignes ou importez un fichier CSV. Pour fixer un prix à la main, modifiez le produit dans le catalogue.</div>`+
  (A.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Fournisseur</th><th>Produit</th><th>Quantité</th><th>Total payé</th><th>Prix unitaire calculé</th><th>Action</th></tr></thead><tbody>`+
@@ -476,7 +479,7 @@ function importCSV(text){
  if(ok)save();route();
  infoBox("Import terminé",`<p><b>${ok}</b> ligne(s) importée(s), <b>${errs.length}</b> ignorée(s).</p>`+(errs.length?`<ul>${errs.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${errs.length>8?`<p>… et ${errs.length-8} autre(s).</p>`:""}`:"")+(ok?"<p>Les prix unitaires sont calculés et le catalogue est à jour.</p>":""))}
 WIRE["responsable.achats"]=()=>{
- $("#adda").onclick=addPurchaseForm;
+ $("#adda").onclick=addPurchaseForm;$("#expa").onclick=()=>exportPurchases(mineA());
  $("#csvm").onclick=()=>{const t="\uFEFFdate;fournisseur;produit;quantite;unite;total;categorie;peremption\n"+day(0)+";Grossiste Démo;Steak haché;10;kg;110;Viandes;"+day(5)+"\n"+day(0)+";Grossiste Démo;Pains burger;200;pièce;70;Boulangerie;"+day(3)+"\n";
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download="modele-achats.csv";a.click()};
  $("#csvi").onclick=()=>$("#csvf").click();
@@ -487,26 +490,30 @@ WIRE["responsable.achats"]=()=>{
 /* ========= Textes légaux (MODÈLES à faire relire avant tout usage réel) ========= */
 const CONSENT_VERSION="2026-10";
 const M=t=>`<mark style="background:var(--am2);padding:0 .2rem">[À compléter : ${t}]</mark>`;
+const V=(k,t)=>LEGAL_INFO[k]?esc(LEGAL_INFO[k]):M(t);
 const LEGAL={
  mentions:["Mentions légales",()=>`<div class="note">Modèle à faire relire par un professionnel avant tout usage réel.</div>
- <p><b>Éditeur</b><br>${M("nom ou raison sociale, forme juridique, SIRET, adresse")}<br>Contact : ${M("adresse e-mail")}</p>
- <p><b>Directeur de la publication</b><br>${M("nom")}</p>
- <p><b>Hébergement du site</b><br>GitHub Pages – GitHub, Inc., San Francisco (États-Unis).</p>
- <p><b>Base de données et comptes (à venir)</b><br>Supabase – région d'hébergement : ${M("à confirmer, de préférence l'Union européenne")}.</p>
+ <p><b>Éditeur</b><br>${V("editeur","nom ou raison sociale")} – ${V("statut","forme juridique")} – SIRET ${V("siret","numéro")}<br>${V("adresse","adresse postale")}<br>Contact : ${V("email","adresse e-mail")}</p>
+ <p><b>Directeur de la publication</b><br>${V("directeur","nom")}</p>
+ <p><b>Hébergement du site</b><br>GitHub Pages – GitHub, Inc., San Francisco (États-Unis). Ce service distribue les pages du site ; il ne reçoit pas les données saisies dans l'application.</p>
+ <p><b>Base de données et comptes utilisateurs</b><br>Supabase – région d'hébergement : ${V("regionBase","région du projet Supabase, de préférence dans l'Union européenne")}.</p>
  <p><b>Statut actuel</b><br>${SB?"Environnement de test : ne saisissez pas encore de données réelles de clients.":"Version de démonstration : toutes les données affichées sont fictives."}</p>`],
- privacy:["Politique de confidentialité",()=>`<div class="note">Modèle à faire relire par un professionnel (RGPD) avant tout usage réel. Ne saisissez aucune donnée personnelle réelle tant que la plateforme n'est pas connectée à sa base sécurisée.</div>
- <p><b>Responsable du traitement</b><br>${M("nom ou raison sociale, adresse, e-mail de contact")}</p>
- <p><b>Données traitées</b><br>Identité professionnelle (nom, e-mail, téléphone facultatif), rôle et restaurant de rattachement, données d'activité saisies (produits, achats, gaspillages). Aucune donnée sensible n'est demandée.</p>
- <p><b>Finalités et bases légales</b><br>Traiter votre demande d'accès (consentement et mesures précontractuelles) ; fournir le service et gérer les comptes (exécution du contrat) ; assurer la sécurité (intérêt légitime).</p>
- <p><b>Destinataires</b><br>L'équipe de votre restaurant pour ses données, l'administrateur de la plateforme, et les prestataires techniques : hébergement du site (GitHub Pages) et base de données avec authentification (Supabase).</p>
- <p><b>Durée de conservation</b><br>Compte actif : pendant la durée d'utilisation puis ${M("durée, ex. 12 mois")}. Demandes d'accès refusées : ${M("durée, ex. 6 mois")}.</p>
- <p><b>Vos droits</b><br>Accès, rectification, effacement, limitation, portabilité et opposition, en écrivant à ${M("adresse e-mail")}. Vous pouvez aussi saisir la CNIL (cnil.fr).</p>
- <p><b>Stockage dans le navigateur</b><br>L'application utilise le stockage local du navigateur uniquement pour fonctionner (session, données de démonstration). Aucun cookie publicitaire ni traceur n'est utilisé.</p>`],
- cgu:["Conditions d'utilisation",()=>`<div class="note">Modèle à faire relire par un professionnel avant tout usage réel.</div>
+ privacy:["Politique de confidentialité",()=>`<div class="note">Modèle à faire relire par un professionnel (RGPD) avant tout usage réel. Version ${CONSENT_VERSION}.</div>
+ <p><b>Responsable du traitement</b><br>${V("editeur","nom ou raison sociale")}, ${V("adresse","adresse")} – ${V("email","adresse e-mail de contact")}</p>
+ <p><b>Données traitées</b><br>1) Comptes : nom, adresse e-mail, rôle, restaurant de rattachement, date et version des textes acceptés. 2) Activité du restaurant : produits, stocks, dates de péremption, achats (fournisseur, quantités, prix) et gaspillages (qui a saisi, quand, quoi). 3) Demandes d'accès : établissement, ville, contact, e-mail, téléphone facultatif, consentement horodaté. Aucune donnée sensible et aucune donnée sur les clients finaux des restaurants ne sont demandées.</p>
+ <p><b>Finalités et bases légales</b><br>Traiter votre demande d'accès (consentement et mesures précontractuelles) ; fournir le service et gérer les comptes (exécution du contrat) ; assurer la sécurité et prévenir les abus (intérêt légitime).</p>
+ <p><b>Destinataires et sous-traitants</b><br>Votre équipe (pour les données de votre restaurant), l'administrateur de la plateforme, Supabase (base de données et authentification, région : ${V("regionBase","région")}), le prestataire d'envoi d'e-mails (${V("fournisseurEmail","nom du prestataire")}). GitHub héberge uniquement les pages du site.</p>
+ <p><b>Transferts hors Union européenne</b><br>${M("à vérifier avec chaque prestataire : lieu d'hébergement, garanties (ex. clauses contractuelles types)")}</p>
+ <p><b>Durées de conservation</b><br>Comptes : durée d'utilisation puis ${V("dureeComptes","durée, ex. 12 mois après la fin du contrat")}. Demandes d'accès refusées : ${V("dureeDemandes","durée")}. Données d'activité : pendant le contrat, puis suppression sur demande. Les sauvegardes éventuelles suivent la même logique.</p>
+ <p><b>Sécurité</b><br>Connexions chiffrées (HTTPS), mots de passe gérés par le service d'authentification (jamais lisibles), accès limités par rôle et par restaurant au niveau de la base de données, suspension possible d'un restaurant.</p>
+ <p><b>Vos droits</b><br>Accès, rectification, effacement, limitation, portabilité (export CSV disponible dans l'application) et opposition, en écrivant à ${V("email","adresse e-mail")}. Vous pouvez saisir la CNIL (cnil.fr).</p>
+ <p><b>Stockage dans le navigateur</b><br>L'application conserve votre session de connexion dans le navigateur, strictement nécessaire au fonctionnement. Aucun cookie publicitaire ni traceur n'est utilisé.</p>`],
+ cgu:["Conditions d'utilisation",()=>`<div class="note">Modèle à faire relire par un professionnel avant tout usage réel. Version ${CONSENT_VERSION}.</div>
  <p><b>Objet</b><br>AntiGaspiPro aide les restaurants et fast-foods à suivre leurs produits, leurs achats et leur gaspillage alimentaire.</p>
- <p><b>Accès</b><br>L'accès se fait sur invitation après validation d'une demande. Chaque compte est personnel : ne partagez pas votre mot de passe.</p>
- <p><b>Données saisies</b><br>Vous restez responsable de l'exactitude des données saisies. Les coûts, économies potentielles et économies réalisées sont des estimations indicatives, sans valeur contractuelle.</p>
+ <p><b>Accès et compte</b><br>L'accès se fait sur invitation. Chaque compte est personnel : ne partagez pas votre mot de passe. Un accès peut être suspendu en cas d'usage abusif.</p>
+ <p><b>Données saisies</b><br>Vous restez responsable de l'exactitude des données saisies. Les coûts, les économies potentielles et la baisse des pertes enregistrées sont des estimations indicatives, sans valeur contractuelle ni comptable.</p>
  <p><b>Disponibilité</b><br>Pendant la phase de test, le service est fourni « en l'état », sans garantie de disponibilité.</p>
+ <p><b>Responsabilité</b><br>${M("limitation de responsabilité à définir avec un professionnel")}</p>
  <p><b>Droit applicable</b><br>Droit français. ${M("tribunal compétent, médiation éventuelle")}</p>`]
 };
 function showLegal(k){const [t,f]=LEGAL[k];infoBox(t,f())}
@@ -571,7 +578,7 @@ const emptyDb=()=>({restaurants:[],users:[],products:[],purchases:[],wastes:[],r
 const nz=v=>v===""||v===undefined?null:v;
 const TB={
  restaurants:{t:"restaurants",to:r=>({id:r.id,name:r.name,type:r.type,city:nz(r.city),status:r.status}),from:r=>({id:r.id,name:r.name,type:r.type,city:r.city||"",status:r.status})},
- users:{t:"profiles",to:u=>({id:u.email}),from:p=>({email:p.id,mail:p.email||"",name:p.full_name||p.email||"Membre",role:p.role,restaurant:p.restaurant_id||""})},
+ users:{t:"profiles",to:u=>({id:u.email}),from:p=>({email:p.id,mail:p.email||"",name:p.full_name||p.email||"Membre",role:p.role,restaurant:p.restaurant_id||"",terms:p.terms_version||""})},
  products:{t:"products",to:p=>({id:p.id,restaurant_id:p.restaurant,name:p.name,category:nz(p.cat),unit:p.unit,unit_cost:p.price,stock_qty:typeof p.qty==="number"?p.qty:null,expiry_date:nz(p.expiry)}),from:p=>({id:p.id,restaurant:p.restaurant_id,name:p.name,cat:p.category||"Autre",unit:p.unit,price:Number(p.unit_cost),qty:p.stock_qty===null?"":Number(p.stock_qty),expiry:p.expiry_date||""})},
  purchases:{t:"purchases",to:a=>({id:a.id,restaurant_id:a.restaurant,purchased_on:a.date,supplier:nz(a.supplier),product_name:a.product,quantity:a.qty,unit:a.unit,total_paid:a.total,unit_price:a.unitPrice,base_unit:a.baseUnit}),from:a=>({id:a.id,restaurant:a.restaurant_id,date:a.purchased_on,supplier:a.supplier||"",product:a.product_name,qty:Number(a.quantity),unit:a.unit,total:Number(a.total_paid),unitPrice:Number(a.unit_price),baseUnit:a.base_unit||a.unit})},
  wastes:{t:"waste_logs",to:w=>({id:w.id,restaurant_id:w.restaurant,product_name:w.product,quantity:w.qty,unit:w.unit,estimated_cost:w.cost,reason:w.reason,wasted_on:w.date,created_by:w.by}),from:w=>({id:w.id,restaurant:w.restaurant_id,product:w.product_name,unit:w.unit,qty:Number(w.quantity),cost:Number(w.estimated_cost),reason:w.reason,date:w.wasted_on,by:w.created_by})},
@@ -603,6 +610,12 @@ async function syncOnce(){
   if(ids.length){const {error}=await SB.from(TB[k].t).delete().in("id",ids);if(error)throw new Error(error.message);ids.forEach(id=>sn.delete(id));if(k==="wastes")touchedW=true}
  }
 }
+function csvCell(v){v=String(v==null?"":v);if(/^[=+\-@]/.test(v))v="'"+v;return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function downloadCSV(name,head,rows){const t="\uFEFF"+[head,...rows].map(r=>r.map(csvCell).join(";")).join("\r\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+const dec=n=>String(n).replace(".",",");
+function exportWastes(L){downloadCSV("gaspillages.csv",["date","restaurant","produit","quantite","unite","raison","cout_estime_eur","saisi_par"],L.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(w=>[w.date,rest(w.restaurant).name,w.product,dec(w.qty),w.unit,w.reason,dec(w.cost),uname(w.by)]));toast("Export téléchargé.")}
+function exportPurchases(L){downloadCSV("achats.csv",["date","fournisseur","produit","quantite","unite","total_paye_eur","prix_unitaire_eur"],L.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>[a.date,a.supplier,a.product,dec(a.qty),a.unit,dec(a.total),dec(a.unitPrice)]));toast("Export téléchargé.")}
 async function sbInvite(email,name,role,restaurant){
  await sbSync();
  const {error}=await SB.from("pending_invites").upsert({email:email.toLowerCase(),role,restaurant_id:restaurant,full_name:name},{onConflict:"email"});
@@ -615,13 +628,29 @@ async function sbEnter(session){
  if(!u||(u.role!=="admin"&&!db.restaurants.some(r=>r.id===u.restaurant))){
   await SB.auth.signOut();db=emptyDb();sbMe=null;boot();
   loginMsg(u?"Ce restaurant est suspendu ou en attente de validation.":"Aucun accès n'est associé à ce compte : une invitation de l'administrateur ou de votre responsable est nécessaire.");return}
- sbMe=u;$("#lerr").classList.add("hidden");$("#pw").value="";location.hash="";boot()}
+ if(u.terms!==CONSENT_VERSION){termsGate(u);return}enterApp(u)}
+let blockEsc=false;
+$("#dlg").addEventListener("cancel",e=>{if(blockEsc)e.preventDefault()});
+function enterApp(u){sbMe=u;$("#lerr").classList.add("hidden");$("#pw").value="";location.hash="";boot()}
+function termsGate(u){const f=$("#dform");blockEsc=true;
+ f.innerHTML=`<h2>Conditions et confidentialité</h2><p style="color:var(--mute);font-size:.9rem">Pour continuer, lisez et acceptez ces textes (version ${CONSENT_VERSION}).</p>
+ <details><summary><b>Conditions d'utilisation</b></summary>${LEGAL.cgu[1]()}</details>
+ <details><summary><b>Politique de confidentialité</b></summary>${LEGAL.privacy[1]()}</details>
+ <label style="display:flex;gap:.5rem;align-items:flex-start;font-weight:400;margin-top:1rem"><input type="checkbox" id="t_ok" style="width:auto;margin-top:.25rem"><span>J'ai lu et j'accepte ces conditions.</span></label>
+ <div class="acts"><button type="button" class="btn sec" id="t_out">Me déconnecter</button><button class="btn">Continuer</button></div>`;
+ $("#t_out").onclick=async()=>{blockEsc=false;$("#dlg").close();await SB.auth.signOut();sbMe=null;db=emptyDb();boot()};
+ f.onsubmit=async e=>{e.preventDefault();if(!$("#t_ok").checked){toast("Cochez la case pour continuer.",1);return}
+  const {error}=await SB.rpc("accept_terms",{v:CONSENT_VERSION});
+  if(error&&!(error.code==="PGRST202"||/could not find|function/i.test(error.message||""))){toast("Enregistrement impossible : "+error.message,1);return}
+  if(error)toast("Pensez à exécuter le fichier supabase-etape3.sql : l'acceptation n'a pas pu être enregistrée.",1);
+  u.terms=CONSENT_VERSION;blockEsc=false;$("#dlg").close();enterApp(u)};
+ $("#dlg").showModal()}
 function signupForm(){const f=$("#dform");
  f.innerHTML=`<h2>Créer mon compte</h2><p style="color:var(--mute);font-size:.9rem">Utilisez l'adresse e-mail à laquelle vous avez été invité(e). Sans invitation, le compte n'aura accès à aucune donnée.</p>
  <label for="s_e">E-mail</label><input id="s_e" type="email" required autocomplete="username">
  <label for="s_p">Mot de passe (8 caractères minimum)</label><input id="s_p" type="password" required autocomplete="new-password">
  <label for="s_q">Confirmer le mot de passe</label><input id="s_q" type="password" required autocomplete="new-password">
- <small style="color:var(--mute)">En créant un compte, vous acceptez les conditions d'utilisation et la politique de confidentialité (liens en bas de la page de connexion).</small>
+ <small style="color:var(--mute)">Les conditions d'utilisation et la politique de confidentialité vous seront présentées à la première connexion ; vous devrez les accepter pour continuer.</small>
  <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Créer mon compte</button></div>`;
  $("#fc").onclick=()=>$("#dlg").close();
  f.onsubmit=async e=>{e.preventDefault();const p=$("#s_p").value;
