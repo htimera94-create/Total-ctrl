@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AntiGaspiPro – Réduire le gaspillage en restauration</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f6f46">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AntiGaspi">
 <style>
 :root{--bg:#f2f5f0;--card:#fff;--ink:#1b2a22;--mute:#5d6b63;--line:#dde4dc;--g:#1f6f46;--g2:#e3f1e8;--am:#b7791f;--am2:#fcf1d9;--rd:#b42318;--rd2:#fde8e6;--bl:#175cd3;--bl2:#e4edfb;--r:10px}
 *{box-sizing:border-box}
@@ -80,6 +87,10 @@ aside.open{left:0}
 #errbox{background:var(--rd2);color:var(--rd);padding:1rem;margin:1rem;border-radius:8px;white-space:pre-wrap}
 .linkbtn{background:none;border:0;color:var(--g);text-decoration:underline;cursor:pointer;padding:0;font:inherit}
 aside .linkbtn{color:#9fb8a8}
+dialog.wide{width:min(980px,96vw)}
+.invl{border:1px solid var(--line);border-radius:var(--r);padding:.7rem;margin:.6rem 0;background:#fbfcfa}
+.invl.off{opacity:.55}
+.invg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;align-items:end}
 </style>
 </head>
 <body>
@@ -107,13 +118,13 @@ aside .linkbtn{color:#9fb8a8}
         <button type="button" data-u="employe@antigaspipro.fr">Employé</button>
       </div>
       <p style="text-align:center;margin:1rem 0 .4rem"><button type="button" class="linkbtn" id="reqopen">Demander un accès pour mon restaurant</button></p>
-      <p style="text-align:center;font-size:.8rem;color:var(--mute);margin:0"><button type="button" class="linkbtn" data-legal="mentions">Mentions légales</button> · <button type="button" class="linkbtn" data-legal="privacy">Confidentialité</button> · <button type="button" class="linkbtn" data-legal="cgu">Conditions</button></p>
+      <p style="text-align:center;font-size:.8rem;color:var(--mute);margin:0"><button type="button" class="linkbtn" data-legal="mentions">Mentions légales</button> · <button type="button" class="linkbtn" data-legal="privacy">Confidentialité</button> · <button type="button" class="linkbtn" data-legal="cgu">Conditions</button> · <button type="button" class="linkbtn" data-install>Installer sur mon téléphone</button></p>
     </form>
   </div>
 </section>
 
 <div id="app" class="hidden">
-  <aside id="side"><div class="logo">AntiGaspiPro</div><nav id="nav"></nav><div style="margin-top:1.2rem;font-size:.78rem"><button type="button" class="linkbtn" data-legal="mentions">Mentions légales</button><br><button type="button" class="linkbtn" data-legal="privacy">Confidentialité</button> · <button type="button" class="linkbtn" data-legal="cgu">Conditions</button></div></aside>
+  <aside id="side"><div class="logo">AntiGaspiPro</div><nav id="nav"></nav><div style="margin-top:1.2rem;font-size:.78rem"><button type="button" class="linkbtn" data-legal="mentions">Mentions légales</button><br><button type="button" class="linkbtn" data-legal="privacy">Confidentialité</button> · <button type="button" class="linkbtn" data-legal="cgu">Conditions</button><br><button type="button" class="linkbtn" data-install>Installer sur mon téléphone</button></div></aside>
   <main>
     <header>
       <div class="who"><button id="burger" class="btn sec sm" aria-label="Ouvrir le menu">☰ Menu</button><strong id="uname"></strong><span class="role" id="urole"></span><span id="urest" style="color:var(--mute)"></span></div>
@@ -126,6 +137,7 @@ aside .linkbtn{color:#9fb8a8}
 <dialog id="dlg"><form method="dialog" id="dform"></form></dialog>
 <div id="toast" aria-live="polite"></div>
 
+<div id="offline" class="hidden" style="padding:2.5rem 1rem;text-align:center"><h2>Connexion impossible</h2><p id="offmsg"></p><button class="btn" onclick="location.reload()">Réessayer</button></div>
 <div id="errbox" class="hidden" role="alert"></div>
 <script>
 "use strict";
@@ -135,10 +147,11 @@ window.onerror=(m,s,l)=>{const b=document.getElementById("errbox");b.classList.r
    N'écrivez JAMAIS ici la clé « secret » (sb_secret_…) ni « service_role », ni un mot de passe. */
 const CFG={supabaseUrl:"https://fsscahhpgdaaavzwmeef.supabase.co",supabaseKey:"sb_publishable_NcsiR8h1F5UpsfsFVAdVmQ_sOlyx4Ge"};
 /* Informations légales : renseignez-les ici UNE fois ; elles apparaissent dans les mentions légales et la politique de confidentialité.
-   Tant qu'un champ est vide, le texte affiche « À compléter ». */
-const LEGAL_INFO={editeur:"",statut:"",siret:"",adresse:"",email:"",directeur:"",regionBase:"",fournisseurEmail:"",dureeComptes:"",dureeDemandes:"6 mois"};
+   Les champs regionBase et fournisseurEmail sont facultatifs : vides, la ligne correspondante n'apparaît pas dans les textes. */
+const LEGAL_INFO={editeur:"Hamidou Timera",statut:"Auto-entrepreneur",siren:"109 364 752",siret:"109 364 752 00013",tva:"non applicable",adresse:"119B Boulevard de la République, 77420 Champs-sur-Marne, France",email:"h.timera94@gmail.com",directeur:"Hamidou Timera",regionBase:"Union européenne, Suède (Stockholm, région eu-north-1)",fournisseurEmail:"",dureeComptes:"12 mois après la suppression du compte",dureeGaspillage:"3 ans",dureeAchats:"3 ans",dureeDemandes:"12 mois",dureeSecurite:"12 mois"};
 let SB=null,DEMO=true;
 const showErr=m=>{const b=document.getElementById("errbox");b.classList.remove("hidden");b.textContent=m};
+function offlineScreen(m){$("#login").classList.add("hidden");$("#app").classList.add("hidden");$("#offmsg").textContent=m;$("#offline").classList.remove("hidden")}
 window.addEventListener("unhandledrejection",e=>showErr("Erreur : "+((e.reason&&e.reason.message)||e.reason)));
 function setBanner(){document.getElementById("demobar").textContent=DEMO
  ?"Mode démonstration : toutes les données sont fictives et stockées uniquement dans ce navigateur. Supabase n'est pas connecté."
@@ -429,9 +442,10 @@ function addPurchase(l){
  db.purchases.push({id:uid(),restaurant:me.restaurant,date:l.date,supplier:l.supplier||"",product:p?p.name:l.product,qty:l.qty,unit:l.unit,total:l.total,unitPrice:up,baseUnit:p?p.unit:(fam==="n"?l.unit:BASEU[fam])});
  return null}
 PAGES.responsable.achats=()=>{const A=db.purchases.filter(a=>a.restaurant===me.restaurant);
- return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="expa">Exporter mes achats</button> <button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
+ return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn" id="inv">Importer une facture (PDF ou photo)</button> <button class="btn sec" id="expa">Exporter mes achats</button> <button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
+ <input type="file" id="invf" accept="image/*,application/pdf" class="hidden">
  <input type="file" id="csvf" accept=".csv,.txt,text/csv" class="hidden">
- <div class="note">Le prix unitaire est calculé automatiquement (total payé ÷ quantité) et met à jour le catalogue, donc le coût des gaspillages. Chaque achat ajoute aussi la quantité au stock. Les factures PDF ou photos ne sont pas lues automatiquement dans cette version : la lecture automatique demande un service côté serveur, prévu avec Supabase. En attendant, saisissez les lignes ou importez un fichier CSV. Pour fixer un prix à la main, modifiez le produit dans le catalogue.</div>`+
+ <div class="note">Le prix unitaire est calculé automatiquement (total payé ÷ quantité) et met à jour le catalogue, donc le coût des gaspillages. Chaque achat ajoute aussi la quantité au stock. Pour une facture PDF ou une photo, utilisez « Importer une facture » : les lignes lues sont toujours à vérifier avant validation. Vous pouvez aussi saisir les lignes ou importer un fichier CSV. Pour fixer un prix à la main, modifiez le produit dans le catalogue.</div>`+
  (A.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Fournisseur</th><th>Produit</th><th>Quantité</th><th>Total payé</th><th>Prix unitaire calculé</th><th>Action</th></tr></thead><tbody>`+
  A.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr><td>${fdate(a.date)}</td><td>${esc(a.supplier||"–")}</td><td><b>${esc(a.product)}</b></td><td>${num(a.qty)} ${esc(a.unit)}</td><td>${eur(a.total)}</td><td>${pfmt(a.unitPrice)} / ${esc(a.baseUnit)}</td><td><button class="btn danger sm" data-dela="${a.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun achat enregistré. Ajoutez une facture ligne par ligne ou importez un fichier CSV."))};
 function addPurchaseForm(){
@@ -479,7 +493,7 @@ function importCSV(text){
  if(ok)save();route();
  infoBox("Import terminé",`<p><b>${ok}</b> ligne(s) importée(s), <b>${errs.length}</b> ignorée(s).</p>`+(errs.length?`<ul>${errs.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${errs.length>8?`<p>… et ${errs.length-8} autre(s).</p>`:""}`:"")+(ok?"<p>Les prix unitaires sont calculés et le catalogue est à jour.</p>":""))}
 WIRE["responsable.achats"]=()=>{
- $("#adda").onclick=addPurchaseForm;$("#expa").onclick=()=>exportPurchases(mineA());
+ $("#inv").onclick=()=>$("#invf").click();$("#invf").onchange=onInvoiceFile;$("#adda").onclick=addPurchaseForm;$("#expa").onclick=()=>exportPurchases(mineA());
  $("#csvm").onclick=()=>{const t="\uFEFFdate;fournisseur;produit;quantite;unite;total;categorie;peremption\n"+day(0)+";Grossiste Démo;Steak haché;10;kg;110;Viandes;"+day(5)+"\n"+day(0)+";Grossiste Démo;Pains burger;200;pièce;70;Boulangerie;"+day(3)+"\n";
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download="modele-achats.csv";a.click()};
  $("#csvi").onclick=()=>$("#csvf").click();
@@ -488,33 +502,53 @@ WIRE["responsable.achats"]=()=>{
  document.querySelectorAll("[data-dela]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cet achat","La ligne est retirée de l'historique ; le prix du catalogue n'est pas modifié.","Supprimer",()=>{db.purchases=db.purchases.filter(a=>a.id!==b.dataset.dela);save();route();toast("Achat supprimé.")}))};
 
 /* ========= Textes légaux (MODÈLES à faire relire avant tout usage réel) ========= */
-const CONSENT_VERSION="2026-10";
-const M=t=>`<mark style="background:var(--am2);padding:0 .2rem">[À compléter : ${t}]</mark>`;
-const V=(k,t)=>LEGAL_INFO[k]?esc(LEGAL_INFO[k]):M(t);
+const CONSENT_VERSION="2026-10-17-2";
+const V=k=>esc(LEGAL_INFO[k]||"");
+const UL=a=>"<ul>"+a.filter(Boolean).map(x=>"<li>"+x+"</li>").join("")+"</ul>";
+const MAJ="17 octobre 2026";
 const LEGAL={
- mentions:["Mentions légales",()=>`<div class="note">Modèle à faire relire par un professionnel avant tout usage réel.</div>
- <p><b>Éditeur</b><br>${V("editeur","nom ou raison sociale")} – ${V("statut","forme juridique")} – SIRET ${V("siret","numéro")}<br>${V("adresse","adresse postale")}<br>Contact : ${V("email","adresse e-mail")}</p>
- <p><b>Directeur de la publication</b><br>${V("directeur","nom")}</p>
- <p><b>Hébergement du site</b><br>GitHub Pages – GitHub, Inc., San Francisco (États-Unis). Ce service distribue les pages du site ; il ne reçoit pas les données saisies dans l'application.</p>
- <p><b>Base de données et comptes utilisateurs</b><br>Supabase – région d'hébergement : ${V("regionBase","région du projet Supabase, de préférence dans l'Union européenne")}.</p>
- <p><b>Statut actuel</b><br>${SB?"Environnement de test : ne saisissez pas encore de données réelles de clients.":"Version de démonstration : toutes les données affichées sont fictives."}</p>`],
- privacy:["Politique de confidentialité",()=>`<div class="note">Modèle à faire relire par un professionnel (RGPD) avant tout usage réel. Version ${CONSENT_VERSION}.</div>
- <p><b>Responsable du traitement</b><br>${V("editeur","nom ou raison sociale")}, ${V("adresse","adresse")} – ${V("email","adresse e-mail de contact")}</p>
- <p><b>Données traitées</b><br>1) Comptes : nom, adresse e-mail, rôle, restaurant de rattachement, date et version des textes acceptés. 2) Activité du restaurant : produits, stocks, dates de péremption, achats (fournisseur, quantités, prix) et gaspillages (qui a saisi, quand, quoi). 3) Demandes d'accès : établissement, ville, contact, e-mail, téléphone facultatif, consentement horodaté. Aucune donnée sensible et aucune donnée sur les clients finaux des restaurants ne sont demandées.</p>
- <p><b>Finalités et bases légales</b><br>Traiter votre demande d'accès (consentement et mesures précontractuelles) ; fournir le service et gérer les comptes (exécution du contrat) ; assurer la sécurité et prévenir les abus (intérêt légitime).</p>
- <p><b>Destinataires et sous-traitants</b><br>Votre équipe (pour les données de votre restaurant), l'administrateur de la plateforme, Supabase (base de données et authentification, région : ${V("regionBase","région")}), le prestataire d'envoi d'e-mails (${V("fournisseurEmail","nom du prestataire")}). GitHub héberge uniquement les pages du site.</p>
- <p><b>Transferts hors Union européenne</b><br>${M("à vérifier avec chaque prestataire : lieu d'hébergement, garanties (ex. clauses contractuelles types)")}</p>
- <p><b>Durées de conservation</b><br>Comptes : durée d'utilisation puis ${V("dureeComptes","durée, ex. 12 mois après la fin du contrat")}. Demandes d'accès refusées : ${V("dureeDemandes","durée")}. Données d'activité : pendant le contrat, puis suppression sur demande. Les sauvegardes éventuelles suivent la même logique.</p>
- <p><b>Sécurité</b><br>Connexions chiffrées (HTTPS), mots de passe gérés par le service d'authentification (jamais lisibles), accès limités par rôle et par restaurant au niveau de la base de données, suspension possible d'un restaurant.</p>
- <p><b>Vos droits</b><br>Accès, rectification, effacement, limitation, portabilité (export CSV disponible dans l'application) et opposition, en écrivant à ${V("email","adresse e-mail")}. Vous pouvez saisir la CNIL (cnil.fr).</p>
- <p><b>Stockage dans le navigateur</b><br>L'application conserve votre session de connexion dans le navigateur, strictement nécessaire au fonctionnement. Aucun cookie publicitaire ni traceur n'est utilisé.</p>`],
- cgu:["Conditions d'utilisation",()=>`<div class="note">Modèle à faire relire par un professionnel avant tout usage réel. Version ${CONSENT_VERSION}.</div>
- <p><b>Objet</b><br>AntiGaspiPro aide les restaurants et fast-foods à suivre leurs produits, leurs achats et leur gaspillage alimentaire.</p>
- <p><b>Accès et compte</b><br>L'accès se fait sur invitation. Chaque compte est personnel : ne partagez pas votre mot de passe. Un accès peut être suspendu en cas d'usage abusif.</p>
- <p><b>Données saisies</b><br>Vous restez responsable de l'exactitude des données saisies. Les coûts, les économies potentielles et la baisse des pertes enregistrées sont des estimations indicatives, sans valeur contractuelle ni comptable.</p>
- <p><b>Disponibilité</b><br>Pendant la phase de test, le service est fourni « en l'état », sans garantie de disponibilité.</p>
- <p><b>Responsabilité</b><br>${M("limitation de responsabilité à définir avec un professionnel")}</p>
- <p><b>Droit applicable</b><br>Droit français. ${M("tribunal compétent, médiation éventuelle")}</p>`]
+ mentions:["Mentions légales",()=>`<p style="color:var(--mute)">Dernière mise à jour : ${MAJ}</p>
+ <p><b>Éditeur du site</b><br>AntiGaspiPro est édité par :<br>${V("editeur")}<br>${V("statut")}<br>${V("adresse")}<br>E-mail : ${V("email")}</p>
+ <p>SIREN : ${V("siren")}<br>SIRET : ${V("siret")}<br>Numéro de TVA intracommunautaire : ${V("tva")}</p>
+ <p><b>Directeur de la publication</b><br>${V("directeur")}<br>E-mail : ${V("email")}</p>
+ <p><b>Hébergement du site</b><br>GitHub, Inc.<br>88 Colin P Kelly Jr Street<br>San Francisco, CA 94107<br>États-Unis<br>Site : https://github.com</p>
+ <p><b>Base de données et authentification</b><br>Les données du service sont hébergées et traitées par :<br>Supabase, Inc.<br>2261 Market Street #5039<br>San Francisco, CA 94114<br>États-Unis<br>Site : https://supabase.com${LEGAL_INFO.regionBase?"<br>Région d’hébergement des données : "+V("regionBase"):""}</p>
+ <p><b>Propriété intellectuelle</b><br>L’ensemble des contenus du site AntiGaspiPro, notamment les textes, éléments graphiques, logos, interfaces et fonctionnalités, est protégé par le droit de la propriété intellectuelle. Toute reproduction, représentation, adaptation ou exploitation, totale ou partielle, sans autorisation préalable écrite est interdite.</p>
+ <p><b>Contact</b><br>Pour toute question relative au site : ${V("email")}</p>`],
+ privacy:["Politique de confidentialité",()=>`<p style="color:var(--mute)">Dernière mise à jour : ${MAJ}</p>
+ <p>AntiGaspiPro collecte et traite des données personnelles afin de permettre aux restaurants et à leurs équipes de gérer leur catalogue, leurs achats et leurs gaspillages alimentaires. Cette politique explique quelles données sont collectées, pourquoi elles sont utilisées, combien de temps elles sont conservées et quels sont vos droits.</p>
+ <p><b>1. Responsable du traitement</b><br>${V("editeur")}, ${V("statut")}<br>${V("adresse")}<br>E-mail : ${V("email")}</p>
+ <p><b>2. Données collectées</b><br>Selon votre utilisation du service, nous pouvons collecter :</p>
+ ${UL(["Nom et prénom ;","Adresse e-mail professionnelle ;","Numéro de téléphone, lorsqu’il est fourni dans une demande d’accès ;","Nom, type et ville du restaurant ;","Identifiants de connexion gérés par Supabase ;","Date et version des conditions et de la politique que vous avez acceptées ;","Informations relatives au restaurant : produits, quantités, unités, dates de péremption, coûts et stocks ;","Informations relatives aux achats : fournisseur, produit, quantité, unité, montant payé et date ;","Informations relatives aux gaspillages : produit, quantité, unité, coût estimé, raison et date ;","Factures importées (PDF ou photo) : le fichier est transmis pour lecture automatique au moment de l’import et n’est pas conservé ; seules les lignes validées par le responsable sont enregistrées ;","Données techniques nécessaires au fonctionnement et à la sécurité du service."])}
+ <p><b>3. Finalités du traitement</b><br>Vos données sont utilisées pour :</p>
+ ${UL(["Créer et gérer votre compte ;","Vous authentifier ;","Associer chaque utilisateur à un restaurant et à un rôle ;","Permettre la gestion du catalogue et des achats ;","Enregistrer et analyser les gaspillages alimentaires ;","Calculer des indicateurs internes ;","Traiter les demandes d’accès à la plateforme ;","Assurer la sécurité du service et prévenir les abus."])}
+ <p><b>4. Bases légales</b><br>Les traitements reposent notamment sur :</p>
+ ${UL(["L’exécution du contrat ou les mesures précontractuelles, pour la création et la gestion des comptes ;","Le consentement, pour l’envoi de communications non essentielles, le cas échéant ;","L’intérêt légitime, pour la sécurité du service et l’amélioration de la plateforme ;","Le respect d’obligations légales, lorsque cela s’applique."])}
+ <p><b>5. Destinataires des données</b><br>Les données peuvent être traitées par :</p>
+ ${UL([V("editeur")+", éditeur d’AntiGaspiPro ;","Supabase, pour l’hébergement de la base de données et l’authentification"+(LEGAL_INFO.regionBase?" (région d’hébergement : "+V("regionBase")+")":"")+" ;","GitHub, pour l’hébergement du site ;","Anthropic, pour la lecture automatique des factures importées par un responsable (le fichier n’est transmis qu’au moment de l’import) ;",LEGAL_INFO.fournisseurEmail?V("fournisseurEmail")+", pour l’envoi des e-mails du service ;":"","Les administrateurs de la plateforme, dans la limite de leurs besoins ;","Les responsables et employés du restaurant concerné, pour les données liées à ce restaurant."])}
+ <p>Vos données ne sont ni vendues ni cédées à des tiers à des fins publicitaires.</p>
+ <p><b>6. Durée de conservation</b></p>
+ ${UL(["Données de compte : conservées pendant la durée d’utilisation du service, puis supprimées ou anonymisées dans un délai de "+V("dureeComptes")+", sauf obligation légale contraire ;","Données de gaspillage : conservées pendant "+V("dureeGaspillage")+" à compter de leur enregistrement ;","Données d’achat : conservées pendant "+V("dureeAchats")+" à compter de leur enregistrement ;","Demandes d’accès refusées : conservées pendant "+V("dureeDemandes")+" ;","Données techniques de sécurité : conservées pendant "+V("dureeSecurite")+"."])}
+ <p><b>7. Sécurité</b><br>Nous mettons en œuvre des mesures techniques et organisationnelles raisonnables pour protéger les données, notamment :</p>
+ ${UL(["Authentification des utilisateurs ;","Gestion des rôles et des accès ;","Activation de la sécurité au niveau des lignes sur les tables de la base de données ;","Accès limité aux données selon le restaurant et le rôle de l’utilisateur ;","Hébergement auprès de prestataires professionnels."])}
+ <p>Aucun système n’est totalement sécurisé. En cas d’incident affectant vos données, nous prendrons les mesures nécessaires et vous informerons lorsque la loi l’exige.</p>
+ <p><b>8. Vos droits</b><br>Conformément au RGPD, vous disposez des droits suivants :</p>
+ ${UL(["Droit d’accès à vos données ;","Droit de rectification ;","Droit à l’effacement ;","Droit à la limitation du traitement ;","Droit à la portabilité ;","Droit d’opposition ;","Droit de retirer votre consentement à tout moment, lorsque le traitement repose sur le consentement."])}
+ <p>Pour exercer vos droits, écrivez à : ${V("email")}<br>Nous pourrons vous demander une preuve d’identité afin de protéger vos données.</p>
+ <p><b>9. Réclamation</b><br>Vous pouvez introduire une réclamation auprès de la CNIL :<br>Commission nationale de l’informatique et des libertés<br>3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07<br>Site : https://www.cnil.fr</p>
+ <p><b>10. Cookies et stockage local</b><br>Le site n’utilise pas de cookies publicitaires ni de cookies de mesure d’audience. L’application conserve votre session de connexion dans le stockage local de votre navigateur, ce qui est nécessaire à son fonctionnement.</p>
+ <p><b>11. Transferts hors Union européenne</b><br>Les données peuvent être hébergées ou traitées par des prestataires situés hors de l’Union européenne, notamment Supabase, GitHub et Anthropic. Ces transferts sont encadrés par les garanties appropriées mises en place par ces prestataires, telles que les clauses contractuelles types ou les mécanismes reconnus par la Commission européenne.</p>`],
+ cgu:["Conditions générales d'utilisation",()=>`<p style="color:var(--mute)">Dernière mise à jour : ${MAJ}</p>
+ <p><b>1. Objet</b><br>Les présentes conditions générales d’utilisation régissent l’accès et l’utilisation du service AntiGaspiPro, destiné à aider les restaurants et fast-foods à suivre leur gaspillage alimentaire. L’utilisation du service implique l’acceptation des présentes conditions.</p>
+ <p><b>2. Accès au service</b><br>L’accès à certaines fonctionnalités nécessite la création d’un compte, sur invitation, et l’attribution d’un rôle : administrateur, responsable de restaurant ou employé. L’utilisateur s’engage à fournir des informations exactes et à conserver ses identifiants de manière confidentielle.</p>
+ <p><b>3. Utilisation du service</b><br>L’utilisateur s’engage à :</p>
+ ${UL(["Utiliser le service uniquement pour des finalités licites ;","Ne pas tenter d’accéder aux données d’autres restaurants ;","Ne pas contourner les mesures de sécurité ;","Ne pas partager ses identifiants ;","Ne pas introduire de données fausses, trompeuses ou illégales ;","Respecter les droits des autres utilisateurs."])}
+ <p><b>4. Responsabilité de l’utilisateur</b><br>L’utilisateur reste responsable des données qu’il saisit, notamment des produits, quantités, coûts, dates et raisons de gaspillage, y compris des lignes de facture lues automatiquement qu’il valide. AntiGaspiPro fournit des outils de suivi et de calcul. Les résultats, estimations et économies potentielles affichés sont indicatifs et ne constituent pas une garantie de résultat financier.</p>
+ <p><b>5. Disponibilité du service</b><br>L’éditeur s’efforce d’assurer la disponibilité du service, mais ne garantit pas un fonctionnement continu, sans erreur ou sans interruption. L’éditeur peut modifier, suspendre ou interrompre tout ou partie du service, notamment pour maintenance, sécurité ou évolution de la plateforme.</p>
+ <p><b>6. Suspension ou suppression d’un compte</b><br>L’éditeur peut suspendre ou supprimer un compte en cas de violation des présentes conditions, d’utilisation frauduleuse ou de risque pour la sécurité de la plateforme.</p>
+ <p><b>7. Propriété intellectuelle</b><br>Tous les éléments du service, notamment les textes, interfaces, fonctionnalités, logos et éléments graphiques, sont protégés. Toute reproduction, représentation ou exploitation non autorisée est interdite.</p>
+ <p><b>8. Modification des conditions</b><br>L’éditeur peut modifier les présentes conditions. Les utilisateurs seront informés des changements importants par un message sur le site ou par e-mail. La poursuite de l’utilisation du service après publication des modifications vaut acceptation de celles-ci.</p>
+ <p><b>9. Droit applicable</b><br>Les présentes conditions sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité. À défaut, les tribunaux français seront compétents, sous réserve des règles impératives de compétence applicables.</p>`]
 };
 function showLegal(k){const [t,f]=LEGAL[k];infoBox(t,f())}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-legal]");if(b){e.preventDefault();showLegal(b.dataset.legal)}});
@@ -595,7 +629,7 @@ let syncing=null,dirty=false,touchedW=false;
 function sbSync(){dirty=true;if(syncing)return syncing;
  syncing=(async()=>{try{while(dirty){dirty=false;await syncOnce()}
    if(touchedW){touchedW=false;db.products=await sbFetch("products");snap("products");route()}}
-  catch(e){touchedW=false;dirty=false;toast("Enregistrement impossible : "+e.message,1);
+  catch(e){touchedW=false;dirty=false;toast(navigator.onLine?"Enregistrement impossible : "+e.message:"Vous êtes hors connexion : la modification n'a pas été enregistrée.",1);
    try{const id=sbMe&&sbMe.email;await sbLoad();sbMe=db.users.find(u=>u.email===id)||sbMe;route()}catch(_){}}
   finally{syncing=null}})();return syncing}
 async function syncOnce(){
@@ -610,6 +644,95 @@ async function syncOnce(){
   if(ids.length){const {error}=await SB.from(TB[k].t).delete().in("id",ids);if(error)throw new Error(error.message);ids.forEach(id=>sn.delete(id));if(k==="wastes")touchedW=true}
  }
 }
+/* ========= Version installable (PWA) ========= */
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e});
+const isStandalone=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+function showInstall(){
+ if(installEvt){installEvt.prompt();installEvt.userChoice.finally(()=>{installEvt=null});return}
+ infoBox("Installer sur mon téléphone",`<p><b>Android (Chrome)</b><br>Ouvrez le menu ⋮ puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».</p><p><b>iPhone (Safari)</b><br>Touchez le bouton Partager (carré avec une flèche), puis « Sur l'écran d'accueil ». Utilisez bien Safari.</p><p><b>Ordinateur (Chrome ou Edge)</b><br>Cliquez sur l'icône d'installation dans la barre d'adresse.</p><p style="color:var(--mute);font-size:.9rem">L'application a besoin d'une connexion internet pour fonctionner.</p>`)}
+document.addEventListener("click",e=>{if(e.target.closest("[data-install]")){e.preventDefault();showInstall()}});
+if(isStandalone())document.querySelectorAll("[data-install]").forEach(b=>b.classList.add("hidden"));
+if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+
+/* ========= Import de factures (PDF ou photo) : lecture par une fonction serveur, validation obligatoire ========= */
+const INV_MAX=4*1024*1024;
+$("#dlg").addEventListener("close",()=>$("#dlg").classList.remove("wide"));
+const b64Of=b=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=()=>ko(new Error("Lecture du fichier impossible."));r.readAsDataURL(b)});
+async function invoicePayload(file){
+ if(file.type==="application/pdf"){if(file.size>INV_MAX)throw new Error("PDF trop volumineux (4 Mo maximum). Réduisez-le ou photographiez la facture.");return{media_type:"application/pdf",data:await b64Of(file)}}
+ if(!/^image\//.test(file.type))throw new Error("Format non pris en charge : choisissez un PDF ou une photo.");
+ const url=URL.createObjectURL(file);
+ try{const img=await new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>ko(new Error("Impossible de lire cette image. Essayez une capture d'écran ou un PDF."));i.src=url});
+  const k=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  const blob=await new Promise(ok=>c.toBlob(ok,"image/jpeg",.85));
+  if(!blob||blob.size>INV_MAX)throw new Error("Image trop volumineuse après compression.");
+  return{media_type:"image/jpeg",data:await b64Of(blob)}}
+ finally{URL.revokeObjectURL(url)}}
+const demoInvoice=()=>({supplier:"Grossiste Démo (exemple)",date:day(0),number:"EX-001",warnings:["Facture d'exemple : simulation, aucun fichier n'a été lu."],lines:[
+ {designation:"Steak haché surgelé",quantity:10,unit:"kg",total_ht:110,tva_pct:5.5,uncertain:false},
+ {designation:"Pain burger",quantity:200,unit:"pièce",total_ht:65,tva_pct:5.5,uncertain:false},
+ {designation:"CARTON SAUCE ALGERIENNE",quantity:3,unit:"carton",total_ht:42,tva_pct:5.5,uncertain:true}]});
+async function extractInvoice(payload){
+ if(!SB)return demoInvoice();
+ const {data,error}=await SB.functions.invoke("extract-invoice",{body:payload});
+ if(error){let m=error.message||"Erreur inconnue.";
+  try{const j=await error.context.json();if(j&&j.error)m=j.error;else throw 0}catch(_){if(/not found|404|Failed to send|FunctionsFetchError/i.test(m))m="La fonction de lecture des factures n'est pas encore installée sur Supabase (voir les étapes d'installation)."}
+  throw new Error(m)}
+ if(data&&data.error)throw new Error(data.error);
+ return data}
+function busy(t){const f=$("#dform");f.onsubmit=e=>e.preventDefault();f.innerHTML=`<h2>${esc(t)}</h2><p style="color:var(--mute)">Cela peut prendre quelques secondes. Ne fermez pas la page.</p>`;blockEsc=true;$("#dlg").showModal()}
+function closeBusy(){blockEsc=false;$("#dlg").close()}
+async function onInvoiceFile(e){const file=e.target.files[0];e.target.value="";if(!file)return;
+ busy("Lecture de la facture…");
+ try{const res=await extractInvoice(await invoicePayload(file));closeBusy();invoiceReview(res)}
+ catch(err){closeBusy();infoBox("Lecture impossible",`<p>${esc(err.message)}</p><p>Vous pouvez saisir les lignes à la main ou importer un fichier CSV.</p>`)}}
+function matchProduct(des){
+ const n=s=>String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+ const d=n(des),dt=new Set(d.split(" ").filter(w=>w.length>2));let best=null,sc=0;
+ db.products.filter(p=>p.restaurant===me.restaurant).forEach(p=>{const pn=n(p.name);let s=0;
+  if(pn&&(d.includes(pn)||pn.includes(d)))s=3;else{const t=pn.split(" ").filter(w=>w.length>2);s=t.filter(w=>dt.has(w)).length/Math.max(1,t.length)*2}
+  if(s>sc){sc=s;best=p}});
+ return sc>=1?best:null}
+function invoiceReview(res){
+ if(!res||!Array.isArray(res.lines)||!res.lines.length){infoBox("Aucune ligne trouvée",`<p>Aucune ligne de produit n'a pu être lue sur ce document.${((res&&res.warnings)||[]).map(w=>"<br>• "+esc(w)).join("")}</p><p>Vous pouvez saisir les lignes à la main ou importer un fichier CSV.</p>`);return}
+ const f=$("#dform"),P=db.products.filter(p=>p.restaurant===me.restaurant);
+ const L=res.lines.map(l=>{const u=normUnit(l.unit||""),m=matchProduct(l.designation||"");
+  return{des:String(l.designation||""),qty:+l.quantity>0?+l.quantity:"",unit:UN[u]?u:"?",raw:String(l.unit||""),ht:typeof l.total_ht==="number"?l.total_ht:null,tva:typeof l.tva_pct==="number"?l.tva_pct:null,unc:!!l.uncertain,name:m?m.name:String(l.designation||"")}});
+ const tot=(l,mode)=>l.ht===null?"":+(mode==="ttc"&&l.tva!==null?l.ht*(1+l.tva/100):l.ht).toFixed(2);
+ const usable=l=>l.qty!==""&&l.unit!=="?"&&l.ht!==null;
+ $("#dlg").classList.add("wide");
+ f.onsubmit=e=>e.preventDefault();
+ f.innerHTML=`<h2>Vérifier la facture</h2>
+ <div class="note">Lecture automatique : vérifiez chaque ligne avant de valider. Rien n'est enregistré tant que vous n'avez pas cliqué sur « Valider ».${(res.warnings||[]).map(w=>"<br>• "+esc(w)).join("")}</div>
+ <div class="invg"><div><label for="iv_s">Fournisseur</label><input id="iv_s" maxlength="60" value="${esc(res.supplier||"")}"></div>
+ <div><label for="iv_d">Date de la facture</label><input id="iv_d" type="date" max="${day(0)}" value="${esc(res.date&&res.date<=day(0)?res.date:day(0))}"></div>
+ <div><label for="iv_m">Montants à utiliser</label><select id="iv_m"><option value="ht">Hors taxes (HT)</option><option value="ttc">TTC (TVA ajoutée)</option></select></div></div>
+ <datalist id="iv_dl">${P.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
+ <div id="iv_l">${L.map((l,i)=>`<div class="invl${usable(l)?"":" off"}" id="iv_w${i}">
+  <label style="display:flex;gap:.5rem;align-items:center;font-weight:400;margin:0 0 .4rem"><input type="checkbox" id="iv_c${i}" style="width:auto" ${usable(l)?"checked":""}><span>Ligne ${i+1} : <b>${esc(l.des)}</b> ${l.unc||!usable(l)?'<span class="badge b-fic">À vérifier</span>':""}</span></label>
+  <div class="invg"><div><label for="iv_p${i}">Produit du catalogue</label><input id="iv_p${i}" list="iv_dl" maxlength="60" value="${esc(l.name)}"></div>
+  <div><label for="iv_q${i}">Quantité</label><input id="iv_q${i}" type="number" min="0" step="any" value="${l.qty}"></div>
+  <div><label for="iv_u${i}">Unité${l.unit==="?"&&l.raw?` (lue : ${esc(l.raw)})`:""}</label><select id="iv_u${i}"><option value="?" ${l.unit==="?"?"selected":""}>— choisir —</option>${Object.keys(UN).map(u=>`<option ${u===l.unit?"selected":""}>${u}</option>`).join("")}</select></div>
+  <div><label for="iv_t${i}">Total (€)</label><input id="iv_t${i}" type="number" min="0" step="any" value="${tot(l,"ht")}"></div></div>
+  <small id="iv_r${i}" style="color:var(--mute)"></small></div>`).join("")}</div>
+ <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Valider les lignes cochées</button></div>`;
+ const calc=i=>{const q=parseFloat($("#iv_q"+i).value),t=parseFloat($("#iv_t"+i).value),u=$("#iv_u"+i).value;
+  $("#iv_r"+i).textContent=(q>0&&t>0&&UN[u])?`Prix unitaire calculé : ${pfmt(t/(q*UN[u].f))} par ${BASEU[UN[u].fam]}`:"Prix unitaire : complétez la quantité, l'unité et le total."};
+ L.forEach((l,i)=>{["q","t"].forEach(k=>$("#iv_"+k+i).oninput=()=>calc(i));$("#iv_u"+i).onchange=()=>calc(i);$("#iv_c"+i).onchange=()=>$("#iv_w"+i).classList.toggle("off",!$("#iv_c"+i).checked);calc(i)});
+ $("#iv_m").onchange=()=>L.forEach((l,i)=>{$("#iv_t"+i).value=tot(l,$("#iv_m").value);calc(i)});
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=e=>{e.preventDefault();let ok=0;const errs=[],date=$("#iv_d").value,sup=$("#iv_s").value.trim();
+  L.forEach((l,i)=>{if(!$("#iv_c"+i).checked)return;
+   const err=addPurchase({date,supplier:sup,product:$("#iv_p"+i).value,cat:"Autre",qty:parseFloat($("#iv_q"+i).value),unit:$("#iv_u"+i).value,total:parseFloat($("#iv_t"+i).value)});
+   if(err)errs.push(`Ligne ${i+1} (${l.des}) : ${err}`);else ok++});
+  if(ok)save();$("#dlg").close();route();
+  if(errs.length)infoBox("Certaines lignes n'ont pas été enregistrées",`<p><b>${ok}</b> ligne(s) enregistrée(s), <b>${errs.length}</b> à corriger :</p><ul>${errs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p>Relancez l'import ou saisissez ces lignes à la main.</p>`);
+  else if(ok)toast(`${ok} ligne(s) enregistrée(s) : prix unitaires calculés, catalogue et stock mis à jour.`);
+  else toast("Aucune ligne cochée : rien n'a été enregistré.",1)};
+ $("#dlg").showModal()}
+
 function csvCell(v){v=String(v==null?"":v);if(/^[=+\-@]/.test(v))v="'"+v;return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
 function downloadCSV(name,head,rows){const t="\uFEFF"+[head,...rows].map(r=>r.map(csvCell).join(";")).join("\r\n");
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
@@ -695,7 +818,7 @@ async function start(){
   try{
    if(!window.supabase)await loadLib("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js").catch(()=>loadLib("https://unpkg.com/@supabase/supabase-js@2.117.1/dist/umd/supabase.js"));
    SB=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseKey);DEMO=false;
-  }catch(e){SB=null;showErr("Supabase n'a pas pu être chargé ("+e.message+"). L'application passe en mode démonstration : aucune donnée réelle n'est utilisée.")}
+  }catch(e){SB=null;offlineScreen("Impossible de charger le service de données ("+e.message+"). Vérifiez votre connexion internet, puis réessayez.");return}
  }
  setBanner();
  if(SB){try{await sbInit()}catch(e){showErr("Erreur de connexion à Supabase : "+e.message);boot()}}else boot()}
