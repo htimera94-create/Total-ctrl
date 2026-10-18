@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AntiGaspiPro – Réduire le gaspillage en restauration</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f6f46">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AntiGaspi">
+<style>
+:root{--bg:#f2f5f0;--card:#fff;--ink:#1b2a22;--mute:#5d6b63;--line:#dde4dc;--g:#1f6f46;--g2:#e3f1e8;--am:#b7791f;--am2:#fcf1d9;--rd:#b42318;--rd2:#fde8e6;--bl:#175cd3;--bl2:#e4edfb;--r:10px}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+h1,h2{margin:0 0 .5em;line-height:1.25;font-family:Georgia,"Times New Roman",serif}
+h1{font-size:1.6rem}h2{font-size:1.2rem}
+button,input,select{font:inherit}
+:focus-visible{outline:3px solid var(--bl);outline-offset:2px}
+.btn{border:1px solid var(--g);background:var(--g);color:#fff;padding:.5rem .9rem;border-radius:8px;cursor:pointer;font-weight:600}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:#fff;color:var(--g)}
+.btn.danger{background:#fff;color:var(--rd);border-color:var(--rd)}
+.btn.sm{padding:.25rem .6rem;font-size:.85rem}
+.hidden{display:none!important}
+.demo-bar{background:var(--am2);color:#6b4710;font-size:.85rem;padding:.4rem 1rem;text-align:center}
+#login{min-height:calc(100vh - var(--bar,34px));display:grid;grid-template-columns:1fr 1fr}
+.l-left{background:var(--g);color:#fff;padding:3rem;display:flex;flex-direction:column;justify-content:center}
+.l-left h1{font-size:2.6rem}
+.l-left p{max-width:36ch;font-size:1.1rem;opacity:.92}
+.l-right{display:flex;align-items:center;justify-content:center;padding:2rem}
+.box{width:100%;max-width:410px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1.6rem}
+label{display:block;font-weight:600;margin:.8rem 0 .25rem;font-size:.9rem}
+input,select{width:100%;padding:.55rem .65rem;border:1px solid #c5cfc6;border-radius:8px;background:#fff}
+.demo{background:var(--g2);border-radius:8px;padding:.7rem;font-size:.88rem;margin-top:1rem}
+.demo button{display:block;width:100%;text-align:left;background:none;border:0;padding:.3rem 0;cursor:pointer;color:var(--g);font-weight:600}
+.err{background:var(--rd2);color:var(--rd);padding:.55rem .7rem;border-radius:8px;margin-top:.8rem;font-size:.9rem}
+#app{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - var(--bar,34px))}
+aside{background:#14271d;color:#dfe9e2;padding:1rem;position:sticky;top:0;height:100vh}
+aside .logo{font:700 1.2rem Georgia,serif;color:#fff;margin-bottom:1.2rem}
+aside a{display:block;color:#cfe0d5;text-decoration:none;padding:.55rem .7rem;border-radius:8px;margin-bottom:2px}
+aside a.on,aside a:hover{background:#24402f;color:#fff}
+main{min-width:0}
+header{display:flex;gap:.8rem;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid var(--line);padding:.7rem 1.2rem;flex-wrap:wrap}
+.who{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.role{background:var(--g2);color:var(--g);border-radius:99px;padding:.15rem .7rem;font-weight:700;font-size:.82rem}
+#burger{display:none}
+#view{padding:1.2rem;max-width:1150px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.9rem;margin-bottom:1.2rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem}
+.stat b{display:block;font:700 1.7rem Georgia,serif}
+.stat span{color:var(--mute);font-size:.88rem}
+.bar{display:flex;align-items:center;gap:.6rem;margin:.45rem 0;font-size:.9rem}
+.bar i{display:block;height:12px;background:var(--g);border-radius:6px;min-width:3px}
+.bar span:first-child{width:140px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evo{display:flex;align-items:flex-end;gap:.6rem;height:170px;padding-top:1.2rem}
+.evo div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.78rem;color:var(--mute);text-align:center}
+.evo i{display:block;width:100%;background:var(--g);border-radius:6px 6px 0 0;min-height:2px}
+.evo i.now{background:var(--am)}
+.tw{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%}
+th,td{padding:.6rem .75rem;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:#f7f9f6;font-size:.85rem;color:var(--mute)}
+tr:last-child td{border-bottom:0}
+.badge{display:inline-block;padding:.1rem .6rem;border-radius:99px;font-size:.8rem;font-weight:700}
+.b-ok{background:var(--g2);color:var(--g)}.b-urg{background:var(--rd2);color:var(--rd)}.b-info{background:var(--bl2);color:var(--bl)}.b-fic{background:var(--am2);color:var(--am)}
+.bar-top{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-bottom:.9rem;flex-wrap:wrap}
+.empty{text-align:center;padding:2rem 1rem;color:var(--mute)}
+.note{background:var(--am2);color:#6b4710;border-radius:8px;padding:.6rem .8rem;font-size:.88rem;margin-bottom:1rem}
+dialog{border:0;border-radius:var(--r);padding:1.3rem;width:min(560px,94vw);max-height:88vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.acts{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.1rem}
+#toast{position:fixed;bottom:1rem;right:1rem;z-index:99;display:grid;gap:.4rem}
+.t{background:var(--ink);color:#fff;padding:.6rem .9rem;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.t.e{background:var(--rd)}
+@media(max-width:800px){
+#login{grid-template-columns:1fr}.l-left{padding:1.6rem}.l-left h1{font-size:1.8rem}
+#app{grid-template-columns:1fr}
+aside{position:fixed;z-index:20;width:240px;left:-260px;transition:left .2s}
+aside.open{left:0}
+#burger{display:inline-block}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.fast{display:grid;gap:.4rem;max-width:520px}.cost{font:700 1.3rem Georgia,serif;color:var(--g);min-height:1.6rem}.big{width:100%;padding:.9rem;font-size:1.05rem;margin-top:.6rem}
+#errbox{background:var(--rd2);color:var(--rd);padding:1rem;margin:1rem;border-radius:8px;white-space:pre-wrap}
+.linkbtn{background:none;border:0;color:var(--g);text-decoration:underline;cursor:pointer;padding:0;font:inherit}
+aside .linkbtn{color:#9fb8a8}
+dialog.wide{width:min(980px,96vw)}
+.invl{border:1px solid var(--line);border-radius:var(--r);padding:.7rem;margin:.6rem 0;background:#fbfcfa}
+.invl.off{opacity:.55}
+.invg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;align-items:end}
+</style>
+</head>
+<body>
+<div class="demo-bar" id="demobar"></div>
+
+<section id="login">
+  <div class="l-left">
+    <h1>AntiGaspiPro</h1>
+    <p>Enregistrez ce qui est jeté, comprenez pourquoi, et réduisez le gaspillage de votre restaurant ou fast-food.</p>
+  </div>
+  <div class="l-right">
+    <form class="box" id="lform" autocomplete="off">
+      <h2>Connexion</h2>
+      <label for="em">Adresse e-mail</label>
+      <input id="em" type="email" required placeholder="vous@exemple.fr">
+      <label for="pw">Mot de passe</label>
+      <input id="pw" type="password" required>
+      <div id="lerr" class="err hidden" role="alert"></div>
+      <button class="btn" style="width:100%;margin-top:1rem">Se connecter</button>
+      <p id="sbLinks" class="hidden" style="text-align:center;margin:.8rem 0 0"><button type="button" class="linkbtn" id="signupBtn">Créer mon compte (sur invitation)</button> · <button type="button" class="linkbtn" id="forgotBtn">Mot de passe oublié</button></p>
+      <div class="demo">
+        <b>Comptes de démonstration (fictifs)</b> – mot de passe commun : <code>demo123</code>
+        <button type="button" data-u="admin@antigaspipro.fr">Administrateur de la plateforme</button>
+        <button type="button" data-u="responsable@antigaspipro.fr">Responsable de restaurant</button>
+        <button type="button" data-u="employe@antigaspipro.fr">Employé</button>
+      </div>
+      <p style="text-align:center;margin:1rem 0 .4rem"><button type="button" class="linkbtn" id="reqopen">Demander un accès pour mon restaurant</button></p>
+      <p style="text-align:center;font-size:.8rem;color:var(--mute);margin:0"><button type="button" class="linkbtn" data-legal="mentions">Mentions légales</button> · <button type="button" class="linkbtn" data-legal="privacy">Confidentialité</button> · <button type="button" class="linkbtn" data-legal="cgu">Conditions</button> · <button type="button" class="linkbtn" data-install>Installer sur mon téléphone</button></p>
+    </form>
+  </div>
+</section>
+
+<div id="app" class="hidden">
+  <aside id="side"><div class="logo">AntiGaspiPro</div><nav id="nav"></nav><div style="margin-top:1.2rem;font-size:.78rem"><button type="button" class="linkbtn" data-legal="mentions">Mentions légales</button><br><button type="button" class="linkbtn" data-legal="privacy">Confidentialité</button> · <button type="button" class="linkbtn" data-legal="cgu">Conditions</button><br><button type="button" class="linkbtn" data-install>Installer sur mon téléphone</button></div></aside>
+  <main>
+    <header>
+      <div class="who"><button id="burger" class="btn sec sm" aria-label="Ouvrir le menu">☰ Menu</button><strong id="uname"></strong><span class="role" id="urole"></span><span id="urest" style="color:var(--mute)"></span></div>
+      <button class="btn sec sm" id="logout">Se déconnecter</button>
+    </header>
+    <div id="view"></div>
+  </main>
+</div>
+
+<dialog id="dlg"><form method="dialog" id="dform"></form></dialog>
+<div id="toast" aria-live="polite"></div>
+
+<div id="offline" class="hidden" style="padding:2.5rem 1rem;text-align:center"><h2>Connexion impossible</h2><p id="offmsg"></p><button class="btn" onclick="location.reload()">Réessayer</button></div>
+<div id="errbox" class="hidden" role="alert"></div>
+<script>
+"use strict";
+window.onerror=(m,s,l)=>{const b=document.getElementById("errbox");b.classList.remove("hidden");b.textContent="Erreur détectée : "+m+" (ligne "+l+")"};
+/* ========= Configuration Supabase =========
+   L'URL du projet et la clé « publishable » sont publiques par conception (la sécurité repose sur les règles RLS).
+   N'écrivez JAMAIS ici la clé « secret » (sb_secret_…) ni « service_role », ni un mot de passe. */
+const CFG={supabaseUrl:"https://fsscahhpgdaaavzwmeef.supabase.co",supabaseKey:"sb_publishable_NcsiR8h1F5UpsfsFVAdVmQ_sOlyx4Ge"};
+/* Informations légales : renseignez-les ici UNE fois ; elles apparaissent dans les mentions légales et la politique de confidentialité.
+   Les champs regionBase et fournisseurEmail sont facultatifs : vides, la ligne correspondante n'apparaît pas dans les textes. */
+const LEGAL_INFO={editeur:"Hamidou Timera",statut:"Auto-entrepreneur",siren:"109 364 752",siret:"109 364 752 00013",tva:"non applicable",adresse:"119B Boulevard de la République, 77420 Champs-sur-Marne, France",email:"h.timera94@gmail.com",directeur:"Hamidou Timera",regionBase:"Union européenne, Suède (Stockholm, région eu-north-1)",fournisseurEmail:"",dureeComptes:"12 mois après la suppression du compte",dureeGaspillage:"3 ans",dureeAchats:"3 ans",dureeDemandes:"12 mois",dureeSecurite:"12 mois"};
+let SB=null,DEMO=true;
+const showErr=m=>{const b=document.getElementById("errbox");b.classList.remove("hidden");b.textContent=m};
+function offlineScreen(m){$("#login").classList.add("hidden");$("#app").classList.add("hidden");$("#offmsg").textContent=m;$("#offline").classList.remove("hidden")}
+window.addEventListener("unhandledrejection",e=>showErr("Erreur : "+((e.reason&&e.reason.message)||e.reason)));
+function setBanner(){const b=document.getElementById("demobar");
+ if(DEMO){b.textContent="Mode démonstration : toutes les données sont fictives et stockées uniquement dans ce navigateur. Supabase n'est pas connecté."}
+ else{b.classList.add("hidden");document.documentElement.style.setProperty("--bar","0px")}}
+
+/* ========= Données ========= */
+const KEY="antigaspipro_db_v5", SKEY="antigaspipro_session_v5", PASS="demo123";
+const ROLES={admin:"Administrateur",responsable:"Responsable de restaurant",employe:"Employé"};
+const REASONS=["Invendu en fin de service","Date dépassée","Surproduction","Erreur de préparation","Produit abîmé","Retour client","Restes d'assiette","Chaîne du froid rompue"];
+const UNITS=["kg","L","pièce","portion"];
+const UN={"pièce":{fam:"n",f:1},portion:{fam:"n",f:1},g:{fam:"m",f:.001},kg:{fam:"m",f:1},mL:{fam:"v",f:.001},L:{fam:"v",f:1}};
+const FAM={kg:"m",L:"v","pièce":"n",portion:"n"};
+const PRE={"pièce":[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50],portion:[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50],g:[50,100,200,250,500,1000,2000,5000],kg:[.5,1,2,3,5,10],mL:[100,250,500,1000,2000],L:[.5,1,2,5,10]};
+const DATES=[["0","Aujourd'hui"],["1","Hier"],["2","Avant-hier"],["3","Il y a 3 jours"],["7","Il y a 7 jours"]];
+const FAMU={m:["g","kg"],v:["mL","L"],n:["pièce","portion"],all:["pièce","portion","g","kg","mL","L"]};
+const DEF={m:"g",v:"mL",n:"pièce",all:"pièce"};
+const BASEU={m:"kg",v:"L",n:"pièce"};
+/* Produits types de fast-food (import optionnel dans le catalogue) : coûts d'achat FICTIFS par kg, L ou pièce */
+const FASTFOOD=[["Burger classique","n",1.8,"Plats préparés"],["Cheeseburger","n",1.6,"Plats préparés"],["Double burger","n",2.6,"Plats préparés"],["Burger poulet","n",1.9,"Plats préparés"],["Steak haché","m",11,"Viandes"],["Filet de poulet pané","m",8.5,"Viandes"],["Nuggets","m",7.5,"Viandes"],["Frites","m",2.2,"Épicerie"],["Pain burger","n",.35,"Boulangerie"],["Fromage en tranche","m",8,"Produits laitiers"],["Salade","m",4,"Fruits et légumes"],["Tomates","m",3.2,"Fruits et légumes"],["Oignons","m",1.5,"Fruits et légumes"],["Bacon","m",9,"Viandes"],["Sauce (ketchup, mayo…)","v",5,"Sauces et boissons"],["Boisson gazeuse","v",1.5,"Sauces et boissons"],["Milkshake","v",4,"Sauces et boissons"],["Glace","v",5,"Plats préparés"],["Café","v",3,"Sauces et boissons"],["Wrap","n",1.2,"Plats préparés"],["Sandwich","n",2,"Plats préparés"],["Kebab (viande)","m",9,"Viandes"],["Pizza","n",3,"Plats préparés"],["Cookie ou dessert","n",.9,"Boulangerie"]];
+const CATS=["Viandes","Poissons","Produits laitiers","Fruits et légumes","Épicerie","Boulangerie","Sauces et boissons","Plats préparés","Autre"];
+const NAV={
+ admin:[["accueil","Vue d'ensemble"],["restaurants","Restaurants inscrits"],["demandes","Demandes d'accès"],["gaspillages","Gaspillages"],["rapports","Rapports"]],
+ responsable:[["accueil","Tableau de bord"],["gaspillages","Gaspillages"],["catalogue","Catalogue produits"],["achats","Achats et factures"],["restaurant","Mon restaurant"]],
+ employe:[["saisie","Enregistrer un gaspillage"],["catalogue","Catalogue du restaurant"],["mesgaspillages","Mes saisies"]]
+};
+const day=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const uid=()=>SB?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function seed(){
+ let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+ const R=[{id:"r1",name:"Burger du Centre",type:"Fast-food",city:"Paris",status:"Actif"},
+  {id:"r2",name:"Le Petit Bistrot",type:"Restaurant",city:"Bobigny",status:"Actif"},
+  {id:"r3",name:"Pizza Express",type:"Fast-food",city:"Montreuil",status:"Suspendu"}];
+ const U=[["admin@antigaspipro.fr","Admin Plateforme","admin",""],["responsable@antigaspipro.fr","Karim Responsable","responsable","r1"],
+  ["employe@antigaspipro.fr","Léa Employée","employe","r1"],["resp.bistrot@antigaspipro.fr","Sophie Martin","responsable","r2"],
+  ["employe.bistrot@antigaspipro.fr","Tom Lefèvre","employe","r2"],["resp.pizza@antigaspipro.fr","Marco Rossi","responsable","r3"]]
+  .map(([email,name,role,restaurant])=>({email,name,role,restaurant}));
+ const P=[["r1","Steak haché","Viandes","kg",11,18,2],["r1","Pain burger","Boulangerie","pièce",.65,40,1],["r1","Frites surgelées","Épicerie","kg",2.2,25,30],
+  ["r1","Fromage en tranche","Produits laitiers","kg",8,6,9],["r1","Salade","Fruits et légumes","kg",4,4,0],["r1","Sauce maison","Sauces et boissons","L",5,8,20],
+  ["r1","Nuggets","Viandes","kg",7.5,10,3],["r1","Boisson gazeuse","Sauces et boissons","L",1.5,30,120],["r1","Salade composée","Plats préparés","portion",3.2,12,0],
+  ["r2","Poulet fermier","Viandes","kg",9.5,12,1],["r2","Saumon frais","Poissons","kg",24,6,-1],["r2","Tomates","Fruits et légumes","kg",3.2,15,2],
+  ["r2","Riz basmati","Épicerie","kg",2.4,25,200],["r2","Crème fraîche","Produits laitiers","L",4.8,8,6],["r2","Salade verte","Fruits et légumes","pièce",1.1,10,0]]
+  .map(([restaurant,name,cat,unit,price,qty,e])=>({id:uid(),restaurant,name,cat,unit,price,qty,expiry:day(e)}));
+ const W=[];
+ for(let i=0;i<50;i++){
+  const r=rnd()<.6?"r1":"r2",pl=P.filter(p=>p.restaurant===r),p=pl[Math.floor(rnd()*pl.length)];
+  const n=p.unit==="pièce"||p.unit==="portion",qty=n?Math.round(2+rnd()*14):Math.round((.5+rnd()*4)*2)/2;
+  W.push({id:uid(),restaurant:r,product:p.name,unit:p.unit,qty,cost:+(qty*p.price).toFixed(2),
+   reason:REASONS[Math.floor(rnd()*REASONS.length)],date:day(-Math.floor(rnd()*45)),by:r==="r1"?"employe@antigaspipro.fr":"employe.bistrot@antigaspipro.fr"});
+ }
+ const A=[["Steak haché",10,"kg",110,11],["Pain burger",200,"pièce",130,.65]].map(([product,qty,unit,total,unitPrice],i)=>({id:uid(),restaurant:"r1",date:day(-5-i),supplier:"Grossiste Démo (fictif)",product,qty,unit,total,unitPrice,baseUnit:unit}));
+ return{restaurants:R,users:U,products:P,wastes:W,purchases:A,requests:[{id:uid(),date:day(-1),name:"Kebab Délice",type:"Fast-food",city:"Bobigny",contact:"Yassine Amrani",email:"contact@kebab-delice.example",phone:"",status:"En attente",consent:true,consentAt:new Date().toISOString(),consentVersion:"2026-10"}]};
+}
+/* Couche de stockage : c'est la seule partie à remplacer par Supabase plus tard. */
+let db;
+function load(){try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){db=null}if(!db||!db.users){db=seed();save()}db.purchases=db.purchases||[];db.requests=db.requests||[]}
+function save(){if(SB){sbSync();return}try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Enregistrement impossible dans ce navigateur.",1)}}
+
+/* ========= Utilitaires ========= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const eur=n=>Number(n||0).toLocaleString("fr-FR",{style:"currency",currency:"EUR"});
+const pfmt=x=>Number(x).toLocaleString("fr-FR",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:4});
+const stk=p=>typeof p.qty==="number"?num(p.qty)+" "+p.unit:"–";
+const expBadge=d=>{if(!d)return"–";const n=-ago(d);return fdate(d)+" "+(n<0?'<span class="badge b-urg">Périmé</span>':n<=2?`<span class="badge b-urg">Urgent (${n===0?"aujourd'hui":n+" j"})</span>`:n<=5?`<span class="badge b-fic">Bientôt (${n} j)</span>`:'<span class="badge b-ok">OK</span>')};
+const num=n=>Number(n||0).toLocaleString("fr-FR",{maximumFractionDigits:2});
+const fdate=d=>d?new Date(d+"T00:00").toLocaleDateString("fr-FR"):"";
+const ago=d=>Math.round((new Date(new Date().toISOString().slice(0,10)+"T00:00")-new Date(d+"T00:00"))/864e5);
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+const group=(a,kf,vf)=>a.reduce((m,x)=>(m[kf(x)]=(m[kf(x)]||0)+vf(x),m),{});
+const rest=id=>db.restaurants.find(r=>r.id===id)||{name:"(supprimé)"};
+const uname=e=>(db.users.find(u=>u.email===e)||{}).name||(SB?"Ancien membre":e);
+const mineW=()=>db.wastes.filter(w=>w.restaurant===me.restaurant);
+const last30=a=>a.filter(w=>ago(w.date)<30);
+function toast(m,err){const t=document.createElement("div");t.className="t"+(err?" e":"");t.textContent=m;$("#toast").append(t);setTimeout(()=>t.remove(),Math.max(3200,m.length*70))}
+let me=null;
+
+/* ========= Fenêtres ========= */
+function openForm(title,fields,vals,onSave){
+ const f=$("#dform");
+ f.innerHTML=`<h2>${esc(title)}</h2>`+fields.map(x=>{
+  const v=vals[x.k]??"";
+  const inp=x.opts?`<select id="f_${x.k}">${x.opts.map(o=>`<option ${String(o)===String(v)?"selected":""}>${esc(o)}</option>`).join("")}</select>`
+   :`<input id="f_${x.k}" type="${x.t||"text"}" ${x.t==="number"?'step="any" min="0"':""} ${x.max?`max="${x.max}"`:""} value="${esc(v)}" ${x.opt?"":"required"}>`;
+  return`<label for="f_${x.k}">${esc(x.l)}</label>${inp}`}).join("")+
+  `<div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=e=>{e.preventDefault();const o={};
+  for(const x of fields){let v=$("#f_"+x.k).value.trim();if(x.t==="number"&&!(x.opt&&v===""))v=parseFloat(v);o[x.k]=v}
+  for(const x of fields)if(x.t==="number"&&o[x.k]!==""&&(isNaN(o[x.k])||o[x.k]<0||(x.pos&&o[x.k]===0))){toast(`« ${x.l} » doit être un nombre ${x.pos?"supérieur à 0":"positif"}.`,1);return}
+  onSave(o);$("#dlg").close()};
+ $("#dlg").showModal();
+}
+function confirmBox(title,msg,label,fn){
+ const f=$("#dform");f.onsubmit=e=>e.preventDefault();
+ f.innerHTML=`<h2>${esc(title)}</h2><p>${esc(msg)}</p><div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button type="button" class="btn danger" id="fy">${esc(label)}</button></div>`;
+ $("#fc").onclick=()=>$("#dlg").close();$("#fy").onclick=()=>{fn();$("#dlg").close()};$("#dlg").showModal();
+}
+
+/* ========= Connexion (démonstration uniquement) ========= */
+function login(email,pw){
+ const u=db.users.find(x=>x.email===email.toLowerCase().trim());
+ if(!u)return"Aucun compte ne correspond à cette adresse. Utilisez l'un des comptes de démonstration.";
+ if(pw!==PASS)return"Mot de passe incorrect. Le mot de passe de démonstration est affiché sous le formulaire.";
+ if(u.role!=="admin"&&rest(u.restaurant).status==="Suspendu")return"Ce restaurant est suspendu par l'administrateur de la plateforme.";
+ localStorage.setItem(SKEY,u.email);return null}
+$("#lform").onsubmit=e=>{e.preventDefault();const r=login($("#em").value,$("#pw").value);
+ if(r){$("#lerr").textContent=r;$("#lerr").classList.remove("hidden")}else{location.hash="";boot()}};
+document.querySelectorAll(".demo button").forEach(b=>b.onclick=()=>{$("#em").value=b.dataset.u;$("#pw").value=PASS;$("#lform").requestSubmit()});
+$("#logout").onclick=()=>{localStorage.removeItem(SKEY);me=null;location.hash="";boot();toast("Vous êtes déconnecté.")};
+$("#burger").onclick=()=>$("#side").classList.toggle("open");
+
+function boot(){
+ if(!SB)load();
+ me=SB?sbMe:(db.users.find(u=>u.email===localStorage.getItem(SKEY))||null);
+ $("#login").classList.toggle("hidden",!!me);$("#app").classList.toggle("hidden",!me);
+ if(!me)return;
+ $("#uname").textContent=me.name;$("#urole").textContent=ROLES[me.role];
+ $("#urest").textContent=me.role==="admin"?"":rest(me.restaurant).name;
+ $("#nav").innerHTML=NAV[me.role].map(([p,l])=>`<a href="#/${p}" data-p="${p}">${l}</a>`).join("")+(SB?"":`<a href="#" id="reset" style="margin-top:1.2rem;color:#f0b4ab">Réinitialiser les données</a>`);
+ if($("#reset"))$("#reset").onclick=ev=>{ev.preventDefault();confirmBox("Réinitialiser les données","Toutes vos modifications seront remplacées par les données de démonstration d'origine.","Réinitialiser",()=>{db=seed();save();route();toast("Données de démonstration réinitialisées.")})};
+ route();
+}
+
+/* ========= Routage avec contrôle de rôle (démonstration, côté navigateur) ========= */
+const PAGES={admin:{},responsable:{},employe:{}},WIRE={};
+function route(){
+ if(!me)return;
+ let p=location.hash.replace("#/","");
+ const allowed=NAV[me.role].map(x=>x[0]);
+ if(!allowed.includes(p)){p=allowed[0];history.replaceState(null,"","#/"+p)}
+ document.querySelectorAll("#nav a[data-p]").forEach(a=>a.classList.toggle("on",a.dataset.p===p));
+ $("#side").classList.remove("open");
+ $("#view").innerHTML=PAGES[me.role][p]();
+ const w=WIRE[me.role+"."+p];if(w)w();
+}
+window.addEventListener("hashchange",route);
+
+/* ========= Éléments communs ========= */
+const stat=(v,l)=>`<div class="card stat"><b>${v}</b><span>${l}</span></div>`;
+const empty=t=>`<div class="card empty">${t}</div>`;
+function bars(map,fmt){const e=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,7);if(!e.length)return'<div class="empty">Aucune donnée pour le moment.</div>';
+ const m=e[0][1]||1;return e.map(([k,v])=>`<div class="bar"><span title="${esc(k)}">${esc(k)}</span><i style="width:${Math.max(3,v/m*55)}%"></i><span>${(fmt||eur)(v)}</span></div>`).join("")}
+function evo(W){const b=[0,0,0,0,0,0];W.forEach(w=>{const k=Math.floor(ago(w.date)/7);if(k>=0&&k<6)b[k]+=w.cost});
+ const m=Math.max(...b,1);
+ return`<div class="evo">`+[5,4,3,2,1,0].map(k=>`<div><span>${b[k]?eur(b[k]):""}</span><i class="${k?"":"now"}" style="height:${b[k]/m*100*.8}%"></i>${k?`il y a ${k} sem.`:"cette sem."}</div>`).join("")+`</div>`}
+function variation(W){const c=sum(W.filter(w=>ago(w.date)<7),w=>w.cost),p=sum(W.filter(w=>ago(w.date)>=7&&ago(w.date)<14),w=>w.cost);
+ if(!p)return c?"nouveau":"–";const v=(c-p)/p*100;return(v>0?"+":"")+num(v)+" %"}
+const baseQty=(W,fam)=>sum(W.filter(w=>(UN[w.unit]||{}).fam===fam),w=>w.qty*UN[w.unit].f);
+const qtyStats=W=>stat(num(baseQty(W,"m"))+" kg","d'aliments solides jetés (30 jours)")+stat(num(baseQty(W,"v"))+" L","de liquides jetés (30 jours)")+stat(num(baseQty(W,"n"))+" pièces","ou portions jetées (30 jours)");
+function wasteTable(list,opts={}){
+ if(!list.length)return empty("Aucun gaspillage enregistré. Utilisez « Enregistrer un gaspillage » dès qu'un produit est jeté.");
+ return`<div class="tw"><table><thead><tr><th>Date</th>${opts.rest?"<th>Restaurant</th>":""}<th>Produit</th><th>Quantité</th><th>Raison</th><th>Coût estimé</th><th>Saisi par</th>${opts.del?"<th>Action</th>":""}</tr></thead><tbody>`+
+ list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(w=>`<tr><td>${fdate(w.date)}</td>${opts.rest?`<td>${esc(rest(w.restaurant).name)}</td>`:""}<td><b>${esc(w.product)}</b></td><td>${num(w.qty)} ${esc(w.unit)}</td><td>${esc(w.reason)}</td><td>${eur(w.cost)}</td><td>${esc(uname(w.by))}</td>${opts.del?`<td><button class="btn danger sm" data-delw="${w.id}">Supprimer</button></td>`:""}</tr>`).join("")+"</tbody></table></div>"}
+function mountWasteForm(f,modal){
+ const P=db.products.filter(p=>p.restaurant===me.restaurant);
+ if(!P.length){f.innerHTML=`<p>Le catalogue de votre restaurant est vide. ${me.role==="employe"?"Demandez à votre responsable d'ajouter des produits.":"Ajoutez des produits ou enregistrez un achat avant de saisir un gaspillage."}</p>`;return}
+ const L=(a,fn)=>a.map(fn).join("");
+ f.innerHTML=(modal?"<h2>Enregistrer un gaspillage</h2>":"")+
+ `<label for="fp">1. Produit jeté</label><select id="fp">${L(P,p=>`<option value="${esc(p.id)}">${esc(p.name)} – ${pfmt(p.price)} / ${esc(p.unit)}</option>`)}</select>
+ <label for="fu">2. Unité</label><select id="fu"></select>
+ <label for="fq">3. Quantité jetée</label><select id="fq"></select>
+ <div id="fql" class="hidden"><label for="fqv">Quantité exacte</label><input id="fqv" type="number" min="0" step="any" inputmode="decimal" placeholder="Exemple : 7 ou 1,5"></div>
+ <label for="fr">4. Raison du gaspillage</label><select id="fr">${L(REASONS,r=>`<option>${esc(r)}</option>`)}</select>
+ <label for="fd">5. Date</label><select id="fd">${L(DATES,d=>`<option value="${d[0]}">${d[1]}</option>`)}<option value="x">Choisir une date…</option></select>
+ <div id="fdl" class="hidden"><input id="fdv" type="date" max="${day(0)}" value="${day(0)}" aria-label="Date"></div>
+ <small id="fpr" style="color:var(--mute)"></small><div class="cost" id="fc2"></div>
+ <button class="btn big">Enregistrer le gaspillage</button>${modal?'<button type="button" class="btn sec big" id="fc">Annuler</button>':""}`;
+ const cur=()=>P.find(x=>x.id===$("#fp").value),price=()=>cur().price*UN[$("#fu").value].f;
+ const qty=()=>$("#fq").value==="x"?parseFloat($("#fqv").value):parseFloat($("#fq").value);
+ function calc(){const q=qty();$("#fpr").textContent="Prix unitaire : "+pfmt(price())+" / "+$("#fu").value;$("#fc2").textContent=q>0?"Coût estimé : "+eur(q*price()):""}
+ function zone(){$("#fql").classList.toggle("hidden",$("#fq").value!=="x")}
+ function presets(){$("#fq").innerHTML=L(PRE[$("#fu").value],q=>`<option value="${q}">${num(q)}</option>`)+'<option value="x">Autre quantité (saisie libre)</option>';zone();calc()}
+ function units(){const p=cur(),fam=FAM[p.unit]||"n";$("#fu").innerHTML=L(FAMU[fam],u=>`<option ${u===p.unit?"selected":""}>${u}</option>`);presets()}
+ $("#fp").onchange=units;$("#fu").onchange=presets;$("#fq").onchange=()=>{zone();calc()};$("#fqv").oninput=calc;
+ $("#fd").onchange=()=>$("#fdl").classList.toggle("hidden",$("#fd").value!=="x");
+ if(modal)$("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=e=>{e.preventDefault();
+  const p=cur(),q=qty(),u=$("#fu").value,d=$("#fd").value==="x"?$("#fdv").value:day(-Number($("#fd").value));
+  if(!(q>0)){toast("Indiquez une quantité supérieure à 0.",1);return}
+  if(!d||d>day(0)){toast("La date ne peut pas être dans le futur.",1);return}
+  db.wastes.push({id:uid(),restaurant:me.restaurant,product:p.name,unit:u,qty:q,cost:+(q*price()).toFixed(2),reason:$("#fr").value,date:d,by:me.email});
+  if(!SB&&typeof p.qty==="number")p.qty=Math.max(0,+(p.qty-q*UN[u].f/UN[p.unit].f).toFixed(3));
+  save();if(modal)$("#dlg").close();route();toast(`Gaspillage enregistré : ${num(q)} ${u} de ${p.name}.`)};
+ units();
+}
+function addWaste(){
+ if(!db.products.some(p=>p.restaurant===me.restaurant)){toast("Le catalogue est vide : ajoutez des produits ou enregistrez un achat avant de saisir un gaspillage.",1);return}
+ mountWasteForm($("#dform"),true);$("#dlg").showModal()}
+function wireDelW(){document.querySelectorAll("[data-delw]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cette saisie","Cette ligne sera retirée des statistiques et la quantité remise en stock.","Supprimer",()=>{const w0=db.wastes.find(w=>w.id===b.dataset.delw),pp=w0&&db.products.find(x=>x.restaurant===w0.restaurant&&x.name===w0.product);if(!SB&&pp&&typeof pp.qty==="number")pp.qty=+(pp.qty+w0.qty*UN[w0.unit].f/UN[pp.unit].f).toFixed(3);db.wastes=db.wastes.filter(w=>w.id!==b.dataset.delw);save();route();toast("Saisie supprimée.")}))}
+
+/* ========= Administrateur ========= */
+const prev30=a=>a.filter(w=>ago(w.date)>=30&&ago(w.date)<60);
+const eco=W=>{const c=sum(last30(W),w=>w.cost),p=sum(prev30(W),w=>w.cost);return p>0?{v:Math.max(0,p-c),sub:c>p?"coût en hausse de "+eur(c-p):"par rapport aux 30 jours précédents"}:{v:null,sub:"pas encore de période de comparaison"}};
+const ecoStat=W=>{const e=eco(W);return stat(e.v===null?"–":eur(e.v),`baisse des pertes enregistrées (30 jours)<br><small>${e.sub}</small>`)};
+const potStat=c=>stat(eur(c*.2),"économies potentielles estimées<br><small>hypothèse : −20 % de gaspillage</small>");
+const volTxt=W=>[num(baseQty(W,"m"))+" kg",num(baseQty(W,"v"))+" L",num(baseQty(W,"n"))+" pièces"].join(" · ");
+PAGES.admin.accueil=()=>{const W=db.wastes,W30=last30(W),R=db.restaurants,c=sum(W30,w=>w.cost);
+ return`<h1>Vue d'ensemble de la plateforme</h1><div class="note">${SB?"":"Données entièrement fictives (démonstration). "}Les économies potentielles reposent sur une hypothèse de −20 %. La baisse des pertes compare les 30 derniers jours aux 30 jours précédents ; ce n'est pas une économie de trésorerie prouvée.</div>
+ <div class="grid">${stat(R.length,"restaurants inscrits")}${stat(R.filter(r=>r.status==="Actif").length,"restaurants actifs")}${stat(db.requests.filter(q=>q.status==="En attente").length,"demandes d'accès en attente")}${stat(eur(c),"coût du gaspillage (30 jours)")}${stat(W30.length,"saisies (30 jours)")}${potStat(c)}${ecoStat(W)}</div>
+ <div class="card"><h2>Évolution du coût du gaspillage (toute la plateforme)</h2>${evo(W)}</div><br>
+ <div class="card"><h2>Détail par restaurant (30 jours)</h2><div class="tw"><table><thead><tr><th>Restaurant</th><th>Statut</th><th>Volume gaspillé</th><th>Coût</th><th>Économies potentielles</th><th>Baisse des pertes</th></tr></thead><tbody>`+
+ R.map(r=>{const w=W.filter(x=>x.restaurant===r.id),w30=last30(w),cc=sum(w30,x=>x.cost),e=eco(w);
+  return`<tr><td><b>${esc(r.name)}</b></td><td><span class="badge ${r.status==="Actif"?"b-ok":"b-urg"}">${esc(r.status)}</span></td><td>${volTxt(w30)}</td><td>${eur(cc)}</td><td>${eur(cc*.2)}</td><td>${e.v===null?"–":eur(e.v)}</td></tr>`}).join("")+`</tbody></table></div></div>`};
+PAGES.admin.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages de la plateforme</h1><button class="btn sec" id="expw">Exporter en CSV</button></div>`+wasteTable(db.wastes,{rest:1,del:1});
+WIRE["admin.gaspillages"]=()=>{$("#expw").onclick=()=>exportWastes(db.wastes);wireDelW()};
+PAGES.admin.rapports=()=>{const W30=last30(db.wastes),c=sum(W30,w=>w.cost);
+ return`<h1>Rapports de la plateforme</h1><div class="grid">${stat(eur(c),"coût total (30 jours)")}${stat(W30.length,"saisies (30 jours)")}${potStat(c)}${ecoStat(db.wastes)}</div>
+ <div class="card"><h2>Coût par restaurant</h2>${bars(group(W30,w=>rest(w.restaurant).name,w=>w.cost))}</div><br>
+ <div class="card"><h2>Coût par raison</h2>${bars(group(W30,w=>w.reason,w=>w.cost))}</div><br>
+ <div class="card"><h2>Produits les plus gaspillés</h2>${bars(group(W30,w=>w.product,w=>w.cost))}</div>`};
+const restFields=[{k:"name",l:"Nom de l'établissement"},{k:"type",l:"Type",opts:["Restaurant","Fast-food"]},{k:"city",l:"Ville"}];
+PAGES.admin.restaurants=()=>`<div class="bar-top"><h1>Restaurants inscrits</h1><button class="btn" id="addr">Ajouter un restaurant</button></div>
+ <div class="tw"><table><thead><tr><th>Établissement</th><th>Type</th><th>Ville</th><th>Responsable</th><th>Statut</th><th>Coût 30 j</th><th>Actions</th></tr></thead><tbody>`+
+ db.restaurants.map(r=>{const m=db.users.find(u=>u.restaurant===r.id&&u.role==="responsable");
+  return`<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.type)}</td><td>${esc(r.city)}</td><td>${m?esc(m.name):"–"}</td><td><span class="badge ${r.status==="Actif"?"b-ok":"b-urg"}">${r.status}</span></td><td>${eur(sum(last30(db.wastes.filter(w=>w.restaurant===r.id)),w=>w.cost))}</td>
+  <td><button class="btn sec sm" data-edit="${r.id}">Modifier</button> <button class="btn sec sm" data-tog="${r.id}">${r.status==="Actif"?"Suspendre":"Réactiver"}</button> <button class="btn danger sm" data-del="${r.id}">Supprimer</button></td></tr>`}).join("")+`</tbody></table></div>`;
+WIRE["admin.restaurants"]=()=>{
+ $("#addr").onclick=()=>openForm("Ajouter un restaurant",[...restFields,{k:"mname",l:"Nom du responsable"},{k:"memail",l:"E-mail du responsable",t:"email"}],{type:"Restaurant"},o=>{
+  const email=o.memail.toLowerCase();if(db.users.some(u=>u.email===email)){toast("Cette adresse e-mail existe déjà.",1);return}
+  const id=(SB?uid():"r"+uid());db.restaurants.push({id,name:o.name,type:o.type,city:o.city,status:"Actif"});
+  if(SB){save();sbInvite(email,o.mname,"responsable",id);route();return}
+  db.users.push({email,name:o.mname,role:"responsable",restaurant:id});save();route();toast("Restaurant ajouté (démonstration : aucun e-mail envoyé).")});
+ document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.edit);
+  openForm("Modifier le restaurant",restFields,r,o=>{Object.assign(r,o);save();route();toast("Restaurant modifié.")})});
+ document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.tog);
+  r.status=r.status==="Actif"?"Suspendu":"Actif";save();route();toast(`${r.name} : ${r.status==="Actif"?"réactivé":"suspendu"}.`)});
+ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce restaurant","Son catalogue, son équipe et tous ses gaspillages seront aussi supprimés.","Supprimer",()=>{
+  const id=b.dataset.del;db.restaurants=db.restaurants.filter(r=>r.id!==id);db.products=db.products.filter(p=>p.restaurant!==id);
+  db.wastes=db.wastes.filter(w=>w.restaurant!==id);db.purchases=db.purchases.filter(a=>a.restaurant!==id);db.users=db.users.filter(u=>u.restaurant!==id);save();route();toast("Restaurant supprimé.")}))};
+
+/* ========= Responsable de restaurant ========= */
+PAGES.responsable.accueil=()=>{const W=mineW(),W30=last30(W),v=variation(W),c=sum(W30,w=>w.cost);
+ const watch=db.products.filter(p=>p.restaurant===me.restaurant&&p.expiry&&-ago(p.expiry)<=5).sort((a,b)=>a.expiry.localeCompare(b.expiry));
+ return`<h1>Tableau de bord – ${esc(rest(me.restaurant).name)}</h1><div class="note">${SB?"":"Données de démonstration fictives. "}La baisse des pertes compare les 30 derniers jours aux 30 jours précédents ; ce n'est pas une économie de trésorerie prouvée.</div>
+ <div class="grid">${stat(eur(c),"coût estimé du gaspillage (30 jours)")}${qtyStats(W30)}${stat(v,"évolution du coût, 7 derniers jours")}${stat(watch.length,"produits à écouler sous 5 jours")}${potStat(c)}${ecoStat(W)}</div>
+ <div class="card"><h2>Actions rapides</h2><button class="btn" id="addw">Enregistrer un gaspillage</button> <button class="btn sec" id="goachats">Achats et factures</button> <button class="btn sec" id="gocat">Gérer le catalogue</button></div><br>
+ <div class="card"><h2>Produits à écouler en priorité</h2>${watch.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Stock</th><th>Péremption</th><th>Valeur en jeu</th></tr></thead><tbody>`+watch.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${stk(p)}</td><td>${expBadge(p.expiry)}</td><td>${typeof p.qty==="number"?eur(p.qty*p.price):"–"}</td></tr>`).join("")+"</tbody></table></div>":'<div class="empty">Aucun produit proche de la péremption.</div>'}</div><br>
+ <div class="card"><h2>Évolution hebdomadaire du coût</h2>${evo(W)}</div><br>
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"><div class="card"><h2>Coût par raison</h2>${bars(group(W30,w=>w.reason,w=>w.cost))}</div>
+ <div class="card"><h2>Produits les plus gaspillés</h2>${bars(group(W30,w=>w.product,w=>w.cost))}</div></div>`};
+WIRE["responsable.accueil"]=()=>{$("#addw").onclick=addWaste;$("#goachats").onclick=()=>location.hash="#/achats";$("#gocat").onclick=()=>location.hash="#/catalogue"};
+PAGES.responsable.gaspillages=()=>`<div class="bar-top"><h1>Gaspillages</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="expw">Exporter en CSV</button><button class="btn" id="addw">Enregistrer un gaspillage</button></div></div>`+wasteTable(mineW(),{del:1});
+WIRE["responsable.gaspillages"]=()=>{$("#expw").onclick=()=>exportWastes(mineW());$("#addw").onclick=addWaste;wireDelW()};
+const prodFields=[{k:"name",l:"Nom du produit"},{k:"cat",l:"Catégorie",opts:CATS},{k:"unit",l:"Unité",opts:UNITS},{k:"price",l:"Coût d'achat par unité (€)",t:"number",pos:1},{k:"qty",l:"Stock actuel (dans l'unité du produit, facultatif)",t:"number",opt:1},{k:"expiry",l:"Date de péremption (facultative)",t:"date",opt:1}];
+PAGES.responsable.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
+ return`<div class="bar-top"><h1>Catalogue produits</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn sec" id="addstd">Importer les produits types</button><button class="btn" id="addp">Ajouter un produit</button></div></div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Stock</th><th>Péremption</th><th>Coût unitaire</th><th>Actions</th></tr></thead><tbody>`+
+ P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${stk(p)}</td><td>${expBadge(p.expiry)}</td><td>${pfmt(p.price)} / ${esc(p.unit)}</td><td><button class="btn sec sm" data-edit="${p.id}">Modifier</button> <button class="btn danger sm" data-del="${p.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide. Ajoutez vos produits, importez les produits types de fast-food ou enregistrez un achat : vos employés ne peuvent déclarer que les produits de ce catalogue."))};
+WIRE["responsable.catalogue"]=()=>{
+ $("#addstd").onclick=()=>confirmBox("Importer les produits types","Les produits types de fast-food (burgers, frites, sauces…) sont ajoutés à votre catalogue avec des prix d'achat fictifs. Vos produits existants ne sont pas modifiés. Enregistrez ensuite vos achats pour obtenir vos vrais prix.","Importer",()=>{
+  const have=new Set(db.products.filter(p=>p.restaurant===me.restaurant).map(p=>p.name.toLowerCase()));let n=0;
+  FASTFOOD.forEach(([name,fam,price,cat])=>{if(!have.has(name.toLowerCase())){db.products.push({id:uid(),restaurant:me.restaurant,name,cat,unit:BASEU[fam],price});n++}});
+  save();route();toast(n+" produit(s) ajouté(s) au catalogue.")});
+ $("#addp").onclick=()=>openForm("Ajouter un produit",prodFields,{cat:CATS[0],unit:"kg"},o=>{
+  if(db.products.some(p=>p.restaurant===me.restaurant&&p.name.toLowerCase()===o.name.toLowerCase())){toast("Ce produit existe déjà dans le catalogue.",1);return}
+  o.id=uid();o.restaurant=me.restaurant;db.products.push(o);save();route();toast("Produit ajouté au catalogue.")});
+ document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const p=db.products.find(x=>x.id===b.dataset.edit);
+  openForm("Modifier le produit",prodFields,p,o=>{Object.assign(p,o);save();route();toast("Produit modifié.")})});
+ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce produit","Les gaspillages déjà enregistrés sont conservés.","Supprimer",()=>{db.products=db.products.filter(x=>x.id!==b.dataset.del);save();route();toast("Produit supprimé.")}))};
+PAGES.responsable.restaurant=()=>{const r=rest(me.restaurant),T=db.users.filter(u=>u.restaurant===me.restaurant&&u.role==="employe");
+ return`<h1>Mon restaurant</h1><div class="card" style="margin-bottom:1.2rem"><div class="bar-top" style="margin:0"><div><h2 style="margin:0">${esc(r.name)}</h2><span style="color:var(--mute)">${esc(r.type)} – ${esc(r.city)}</span></div><button class="btn sec" id="editr">Modifier</button></div></div>
+ <div class="bar-top"><h2 style="margin:0">Équipe</h2><button class="btn" id="addt">Ajouter un employé</button></div>`+
+ (T.length?`<div class="tw"><table><thead><tr><th>Nom</th><th>E-mail</th><th>Action</th></tr></thead><tbody>`+T.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.mail||u.email)}</td><td><button class="btn danger sm" data-delu="${esc(u.email)}">Retirer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun employé. Ajoutez votre équipe pour qu'elle enregistre les gaspillages."))};
+WIRE["responsable.restaurant"]=()=>{
+ $("#editr").onclick=()=>{const r=rest(me.restaurant);openForm("Modifier mon restaurant",restFields,r,o=>{Object.assign(r,o);save();boot();toast("Informations enregistrées.")})};
+ $("#addt").onclick=()=>openForm("Ajouter un employé",[{k:"name",l:"Nom"},{k:"email",l:"E-mail",t:"email"}],{},o=>{
+  o.email=o.email.toLowerCase();if(db.users.some(u=>u.email===o.email)){toast("Cette adresse e-mail existe déjà.",1);return}
+  if(SB){sbInvite(o.email,o.name,"employe",me.restaurant);return}
+  db.users.push({email:o.email,name:o.name,role:"employe",restaurant:me.restaurant});save();route();toast("Employé ajouté (démonstration : aucun e-mail envoyé).")});
+ document.querySelectorAll("[data-delu]").forEach(b=>b.onclick=()=>confirmBox("Retirer cet employé","Ses saisies passées sont conservées.","Retirer",()=>{db.users=db.users.filter(u=>u.email!==b.dataset.delu);save();route();toast("Employé retiré.")}))};
+
+/* ========= Achats et factures (responsable) ========= */
+const UALIAS={piece:"pièce",pieces:"pièce",pcs:"pièce",pc:"pièce",u:"pièce",unite:"pièce",unites:"pièce",portion:"portion",portions:"portion",g:"g",gr:"g",gramme:"g",grammes:"g",kg:"kg",kilo:"kg",kilos:"kg",ml:"mL",l:"L",litre:"L",litres:"L"};
+const normUnit=s=>UALIAS[(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()]||s;
+function infoBox(title,html){const f=$("#dform");f.onsubmit=e=>e.preventDefault();
+ f.innerHTML=`<h2>${esc(title)}</h2>${html}<div class="acts"><button type="button" class="btn" id="fc">Fermer</button></div>`;$("#fc").onclick=()=>$("#dlg").close();$("#dlg").showModal()}
+function addPurchase(l){
+ l.product=(l.product||"").trim();
+ if(!l.product)return"Indiquez le produit.";
+ if(!UN[l.unit])return`Unité inconnue « ${l.unit} ».`;
+ if(!(l.qty>0))return"La quantité doit être supérieure à 0.";
+ if(!(l.total>0))return"Le total payé doit être supérieur à 0.";
+ if(!l.date||l.date>day(0))return"La date est invalide ou dans le futur.";
+ if(l.exp&&!/^\d{4}-\d{2}-\d{2}$/.test(l.exp))return"Date de péremption invalide.";
+ const fam=UN[l.unit].fam,up=+(l.total/(l.qty*UN[l.unit].f)).toFixed(4);
+ const p=db.products.find(x=>x.restaurant===me.restaurant&&x.name.toLowerCase()===l.product.toLowerCase());
+ if(p){if(FAM[p.unit]!==fam)return`« ${p.name} » est géré en ${p.unit} dans le catalogue : utilisez une unité compatible.`;p.price=up;p.qty=+((+p.qty||0)+l.qty*UN[l.unit].f/UN[p.unit].f).toFixed(3);if(l.exp)p.expiry=l.exp}
+ else db.products.push({id:uid(),restaurant:me.restaurant,name:l.product,cat:CATS.includes(l.cat)?l.cat:"Autre",unit:fam==="n"?l.unit:BASEU[fam],price:up,qty:+(l.qty*UN[l.unit].f/UN[fam==="n"?l.unit:BASEU[fam]].f).toFixed(3),expiry:l.exp||""});
+ db.purchases.push({id:uid(),restaurant:me.restaurant,date:l.date,supplier:l.supplier||"",product:p?p.name:l.product,qty:l.qty,unit:l.unit,total:l.total,unitPrice:up,baseUnit:p?p.unit:(fam==="n"?l.unit:BASEU[fam])});
+ return null}
+PAGES.responsable.achats=()=>{const A=db.purchases.filter(a=>a.restaurant===me.restaurant);
+ return`<div class="bar-top"><h1>Achats et factures</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn" id="inv">Importer une facture (PDF ou photo)</button> <button class="btn sec" id="expa">Exporter mes achats</button> <button class="btn sec" id="csvm">Télécharger le modèle CSV</button><button class="btn sec" id="csvi">Importer un fichier CSV</button><button class="btn" id="adda">Ajouter un achat</button></div></div>
+ <input type="file" id="invf" accept="image/*,application/pdf" class="hidden">
+ <input type="file" id="csvf" accept=".csv,.txt,text/csv" class="hidden">
+ <div class="note">Le prix unitaire est calculé automatiquement (total payé ÷ quantité) et met à jour le catalogue, donc le coût des gaspillages. Chaque achat ajoute aussi la quantité au stock. Pour une facture PDF ou une photo, utilisez « Importer une facture » : les lignes lues sont toujours à vérifier avant validation. Vous pouvez aussi saisir les lignes ou importer un fichier CSV. Pour fixer un prix à la main, modifiez le produit dans le catalogue.</div>`+
+ (A.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Fournisseur</th><th>Produit</th><th>Quantité</th><th>Total payé</th><th>Prix unitaire calculé</th><th>Action</th></tr></thead><tbody>`+
+ A.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr><td>${fdate(a.date)}</td><td>${esc(a.supplier||"–")}</td><td><b>${esc(a.product)}</b></td><td>${num(a.qty)} ${esc(a.unit)}</td><td>${eur(a.total)}</td><td>${pfmt(a.unitPrice)} / ${esc(a.baseUnit)}</td><td><button class="btn danger sm" data-dela="${a.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucun achat enregistré. Ajoutez une facture ligne par ligne ou importez un fichier CSV."))};
+function addPurchaseForm(){
+ const P=db.products.filter(p=>p.restaurant===me.restaurant),f=$("#dform");
+ f.innerHTML=`<h2>Ajouter un achat</h2>
+ <label for="a_d">Date de la facture</label><input id="a_d" type="date" max="${day(0)}" value="${day(0)}" required>
+ <label for="a_s">Fournisseur (facultatif)</label><input id="a_s" maxlength="60">
+ <label for="a_p">Produit</label><input id="a_p" list="a_dl" maxlength="60" autocomplete="off" placeholder="Choisissez ou tapez un nouveau produit"><datalist id="a_dl">${P.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
+ <label for="a_c">Catégorie (pour un nouveau produit)</label><select id="a_c">${CATS.map(c=>`<option>${esc(c)}</option>`).join("")}</select>
+ <label for="a_q">Quantité achetée</label><div style="display:flex;gap:.5rem"><input id="a_q" type="number" min="0" step="any" inputmode="decimal" style="flex:1"><select id="a_u" style="flex:1" aria-label="Unité">${Object.keys(UN).map(u=>`<option ${u==="kg"?"selected":""}>${u}</option>`).join("")}</select></div>
+ <label for="a_e">Date de péremption (facultatif)</label><input id="a_e" type="date">
+ <label for="a_t">Total payé (€)</label><input id="a_t" type="number" min="0" step="any" inputmode="decimal">
+ <p id="a_r" style="font-weight:700;margin:.6rem 0 0"></p>
+ <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Enregistrer</button></div>`;
+ function calc(){const q=parseFloat($("#a_q").value),t=parseFloat($("#a_t").value),u=$("#a_u").value;
+  $("#a_r").textContent=(q>0&&t>0)?`Prix unitaire calculé : ${pfmt(t/(q*UN[u].f))} par ${BASEU[UN[u].fam]}`+(UN[u].f!==1?` (soit ${pfmt(t/q)} par ${u})`:""):"Prix unitaire calculé : –"}
+ $("#a_p").oninput=()=>{const p=P.find(x=>x.name.toLowerCase()===$("#a_p").value.trim().toLowerCase());
+  if(p&&FAM[p.unit]!==UN[$("#a_u").value].fam)$("#a_u").value=p.unit;calc()};
+ ["a_q","a_t"].forEach(i=>$("#"+i).oninput=calc);$("#a_u").onchange=calc;
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=e=>{e.preventDefault();
+  const err=addPurchase({date:$("#a_d").value,supplier:$("#a_s").value.trim(),product:$("#a_p").value,cat:$("#a_c").value,qty:parseFloat($("#a_q").value),unit:$("#a_u").value,total:parseFloat($("#a_t").value),exp:$("#a_e").value});
+  if(err){toast(err,1);return}
+  const a=db.purchases[db.purchases.length-1];save();$("#dlg").close();route();toast(`Achat enregistré : ${pfmt(a.unitPrice)} par ${a.baseUnit}, catalogue mis à jour.`)};
+ $("#dlg").showModal();
+}
+function parseCSV(text){
+ const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).map((l,i)=>({l,n:i+1})).filter(x=>x.l.trim());
+ if(lines.length<2)return{err:"Le fichier doit contenir une ligne d'en-têtes et au moins une ligne de données."};
+ const d=lines[0].l.split(";").length>=lines[0].l.split(",").length?";":",";
+ const split=s=>{const o=[];let c="",q=false;for(const ch of s){if(ch==='"')q=!q;else if(ch===d&&!q){o.push(c);c=""}else c+=ch}o.push(c);return o.map(x=>x.trim())};
+ const H=split(lines[0].l).map(s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,""));
+ const ix=(...k)=>H.findIndex(h=>k.includes(h));
+ const c={date:ix("date"),sup:ix("fournisseur"),prod:ix("produit","article","designation"),qty:ix("quantite","qte"),unit:ix("unite"),tot:ix("total","totalpaye","montant","totalht","prixtotal"),cat:ix("categorie"),exp:ix("peremption","datedeperemption","dlc")};
+ if(c.prod<0||c.qty<0||c.unit<0||c.tot<0)return{err:"Colonnes obligatoires manquantes : produit, quantite, unite, total."};
+ const nb=s=>{s=String(s||"").replace(/[€\s]/g,"");if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");return parseFloat(s)};
+ const dt=s=>{s=(s||"").trim();if(!s)return day(0);let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return s;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`:"invalide"};
+ return{rows:lines.slice(1).map(x=>{const r=split(x.l),g=i=>i<0?"":(r[i]||"");
+  return{n:x.n,line:{date:dt(g(c.date)),supplier:g(c.sup),product:g(c.prod),cat:g(c.cat),qty:nb(g(c.qty)),unit:normUnit(g(c.unit)),total:nb(g(c.tot)),exp:g(c.exp)?dt(g(c.exp)):""}}})};
+}
+function importCSV(text){
+ const res=parseCSV(text);if(res.err){infoBox("Import impossible",`<p>${esc(res.err)}</p>`);return}
+ let ok=0;const errs=[];
+ res.rows.forEach(r=>{const e=addPurchase(r.line);if(e)errs.push(`Ligne ${r.n} : ${e}`);else ok++});
+ if(ok)save();route();
+ infoBox("Import terminé",`<p><b>${ok}</b> ligne(s) importée(s), <b>${errs.length}</b> ignorée(s).</p>`+(errs.length?`<ul>${errs.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${errs.length>8?`<p>… et ${errs.length-8} autre(s).</p>`:""}`:"")+(ok?"<p>Les prix unitaires sont calculés et le catalogue est à jour.</p>":""))}
+WIRE["responsable.achats"]=()=>{
+ $("#inv").onclick=()=>$("#invf").click();$("#invf").onchange=onInvoiceFile;$("#adda").onclick=addPurchaseForm;$("#expa").onclick=()=>exportPurchases(mineA());
+ $("#csvm").onclick=()=>{const t="\uFEFFdate;fournisseur;produit;quantite;unite;total;categorie;peremption\n"+day(0)+";Grossiste Démo;Steak haché;10;kg;110;Viandes;"+day(5)+"\n"+day(0)+";Grossiste Démo;Pains burger;200;pièce;70;Boulangerie;"+day(3)+"\n";
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download="modele-achats.csv";a.click()};
+ $("#csvi").onclick=()=>$("#csvf").click();
+ $("#csvf").onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>1e6){toast("Fichier trop volumineux (1 Mo maximum).",1);return}
+  const r=new FileReader();r.onload=()=>importCSV(String(r.result));r.readAsText(file,"utf-8")};
+ document.querySelectorAll("[data-dela]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cet achat","La ligne est retirée de l'historique ; le prix du catalogue n'est pas modifié.","Supprimer",()=>{db.purchases=db.purchases.filter(a=>a.id!==b.dataset.dela);save();route();toast("Achat supprimé.")}))};
+
+/* ========= Textes légaux (MODÈLES à faire relire avant tout usage réel) ========= */
+const CONSENT_VERSION="2026-10-17-2";
+const V=k=>esc(LEGAL_INFO[k]||"");
+const UL=a=>"<ul>"+a.filter(Boolean).map(x=>"<li>"+x+"</li>").join("")+"</ul>";
+const MAJ="17 octobre 2026";
+const LEGAL={
+ mentions:["Mentions légales",()=>`<p style="color:var(--mute)">Dernière mise à jour : ${MAJ}</p>
+ <p><b>Éditeur du site</b><br>AntiGaspiPro est édité par :<br>${V("editeur")}<br>${V("statut")}<br>${V("adresse")}<br>E-mail : ${V("email")}</p>
+ <p>SIREN : ${V("siren")}<br>SIRET : ${V("siret")}<br>Numéro de TVA intracommunautaire : ${V("tva")}</p>
+ <p><b>Directeur de la publication</b><br>${V("directeur")}<br>E-mail : ${V("email")}</p>
+ <p><b>Hébergement du site</b><br>GitHub, Inc.<br>88 Colin P Kelly Jr Street<br>San Francisco, CA 94107<br>États-Unis<br>Site : https://github.com</p>
+ <p><b>Base de données et authentification</b><br>Les données du service sont hébergées et traitées par :<br>Supabase, Inc.<br>2261 Market Street #5039<br>San Francisco, CA 94114<br>États-Unis<br>Site : https://supabase.com${LEGAL_INFO.regionBase?"<br>Région d’hébergement des données : "+V("regionBase"):""}</p>
+ <p><b>Propriété intellectuelle</b><br>L’ensemble des contenus du site AntiGaspiPro, notamment les textes, éléments graphiques, logos, interfaces et fonctionnalités, est protégé par le droit de la propriété intellectuelle. Toute reproduction, représentation, adaptation ou exploitation, totale ou partielle, sans autorisation préalable écrite est interdite.</p>
+ <p><b>Contact</b><br>Pour toute question relative au site : ${V("email")}</p>`],
+ privacy:["Politique de confidentialité",()=>`<p style="color:var(--mute)">Dernière mise à jour : ${MAJ}</p>
+ <p>AntiGaspiPro collecte et traite des données personnelles afin de permettre aux restaurants et à leurs équipes de gérer leur catalogue, leurs achats et leurs gaspillages alimentaires. Cette politique explique quelles données sont collectées, pourquoi elles sont utilisées, combien de temps elles sont conservées et quels sont vos droits.</p>
+ <p><b>1. Responsable du traitement</b><br>${V("editeur")}, ${V("statut")}<br>${V("adresse")}<br>E-mail : ${V("email")}</p>
+ <p><b>2. Données collectées</b><br>Selon votre utilisation du service, nous pouvons collecter :</p>
+ ${UL(["Nom et prénom ;","Adresse e-mail professionnelle ;","Numéro de téléphone, lorsqu’il est fourni dans une demande d’accès ;","Nom, type et ville du restaurant ;","Identifiants de connexion gérés par Supabase ;","Date et version des conditions et de la politique que vous avez acceptées ;","Informations relatives au restaurant : produits, quantités, unités, dates de péremption, coûts et stocks ;","Informations relatives aux achats : fournisseur, produit, quantité, unité, montant payé et date ;","Informations relatives aux gaspillages : produit, quantité, unité, coût estimé, raison et date ;","Factures importées (PDF ou photo) : le fichier est transmis pour lecture automatique au moment de l’import et n’est pas conservé ; seules les lignes validées par le responsable sont enregistrées ;","Données techniques nécessaires au fonctionnement et à la sécurité du service."])}
+ <p><b>3. Finalités du traitement</b><br>Vos données sont utilisées pour :</p>
+ ${UL(["Créer et gérer votre compte ;","Vous authentifier ;","Associer chaque utilisateur à un restaurant et à un rôle ;","Permettre la gestion du catalogue et des achats ;","Enregistrer et analyser les gaspillages alimentaires ;","Calculer des indicateurs internes ;","Traiter les demandes d’accès à la plateforme ;","Assurer la sécurité du service et prévenir les abus."])}
+ <p><b>4. Bases légales</b><br>Les traitements reposent notamment sur :</p>
+ ${UL(["L’exécution du contrat ou les mesures précontractuelles, pour la création et la gestion des comptes ;","Le consentement, pour l’envoi de communications non essentielles, le cas échéant ;","L’intérêt légitime, pour la sécurité du service et l’amélioration de la plateforme ;","Le respect d’obligations légales, lorsque cela s’applique."])}
+ <p><b>5. Destinataires des données</b><br>Les données peuvent être traitées par :</p>
+ ${UL([V("editeur")+", éditeur d’AntiGaspiPro ;","Supabase, pour l’hébergement de la base de données et l’authentification"+(LEGAL_INFO.regionBase?" (région d’hébergement : "+V("regionBase")+")":"")+" ;","GitHub, pour l’hébergement du site ;","Anthropic, pour la lecture automatique des factures importées par un responsable (le fichier n’est transmis qu’au moment de l’import) ;",LEGAL_INFO.fournisseurEmail?V("fournisseurEmail")+", pour l’envoi des e-mails du service ;":"","Les administrateurs de la plateforme, dans la limite de leurs besoins ;","Les responsables et employés du restaurant concerné, pour les données liées à ce restaurant."])}
+ <p>Vos données ne sont ni vendues ni cédées à des tiers à des fins publicitaires.</p>
+ <p><b>6. Durée de conservation</b></p>
+ ${UL(["Données de compte : conservées pendant la durée d’utilisation du service, puis supprimées ou anonymisées dans un délai de "+V("dureeComptes")+", sauf obligation légale contraire ;","Données de gaspillage : conservées pendant "+V("dureeGaspillage")+" à compter de leur enregistrement ;","Données d’achat : conservées pendant "+V("dureeAchats")+" à compter de leur enregistrement ;","Demandes d’accès refusées : conservées pendant "+V("dureeDemandes")+" ;","Données techniques de sécurité : conservées pendant "+V("dureeSecurite")+"."])}
+ <p><b>7. Sécurité</b><br>Nous mettons en œuvre des mesures techniques et organisationnelles raisonnables pour protéger les données, notamment :</p>
+ ${UL(["Authentification des utilisateurs ;","Gestion des rôles et des accès ;","Activation de la sécurité au niveau des lignes sur les tables de la base de données ;","Accès limité aux données selon le restaurant et le rôle de l’utilisateur ;","Hébergement auprès de prestataires professionnels."])}
+ <p>Aucun système n’est totalement sécurisé. En cas d’incident affectant vos données, nous prendrons les mesures nécessaires et vous informerons lorsque la loi l’exige.</p>
+ <p><b>8. Vos droits</b><br>Conformément au RGPD, vous disposez des droits suivants :</p>
+ ${UL(["Droit d’accès à vos données ;","Droit de rectification ;","Droit à l’effacement ;","Droit à la limitation du traitement ;","Droit à la portabilité ;","Droit d’opposition ;","Droit de retirer votre consentement à tout moment, lorsque le traitement repose sur le consentement."])}
+ <p>Pour exercer vos droits, écrivez à : ${V("email")}<br>Nous pourrons vous demander une preuve d’identité afin de protéger vos données.</p>
+ <p><b>9. Réclamation</b><br>Vous pouvez introduire une réclamation auprès de la CNIL :<br>Commission nationale de l’informatique et des libertés<br>3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07<br>Site : https://www.cnil.fr</p>
+ <p><b>10. Cookies et stockage local</b><br>Le site n’utilise pas de cookies publicitaires ni de cookies de mesure d’audience. L’application conserve votre session de connexion dans le stockage local de votre navigateur, ce qui est nécessaire à son fonctionnement.</p>
+ <p><b>11. Transferts hors Union européenne</b><br>Les données peuvent être hébergées ou traitées par des prestataires situés hors de l’Union européenne, notamment Supabase, GitHub et Anthropic. Ces transferts sont encadrés par les garanties appropriées mises en place par ces prestataires, telles que les clauses contractuelles types ou les mécanismes reconnus par la Commission européenne.</p>`],
+ cgu:["Conditions générales d'utilisation",()=>`<p style="color:var(--mute)">Dernière mise à jour : ${MAJ}</p>
+ <p><b>1. Objet</b><br>Les présentes conditions générales d’utilisation régissent l’accès et l’utilisation du service AntiGaspiPro, destiné à aider les restaurants et fast-foods à suivre leur gaspillage alimentaire. L’utilisation du service implique l’acceptation des présentes conditions.</p>
+ <p><b>2. Accès au service</b><br>L’accès à certaines fonctionnalités nécessite la création d’un compte, sur invitation, et l’attribution d’un rôle : administrateur, responsable de restaurant ou employé. L’utilisateur s’engage à fournir des informations exactes et à conserver ses identifiants de manière confidentielle.</p>
+ <p><b>3. Utilisation du service</b><br>L’utilisateur s’engage à :</p>
+ ${UL(["Utiliser le service uniquement pour des finalités licites ;","Ne pas tenter d’accéder aux données d’autres restaurants ;","Ne pas contourner les mesures de sécurité ;","Ne pas partager ses identifiants ;","Ne pas introduire de données fausses, trompeuses ou illégales ;","Respecter les droits des autres utilisateurs."])}
+ <p><b>4. Responsabilité de l’utilisateur</b><br>L’utilisateur reste responsable des données qu’il saisit, notamment des produits, quantités, coûts, dates et raisons de gaspillage, y compris des lignes de facture lues automatiquement qu’il valide. AntiGaspiPro fournit des outils de suivi et de calcul. Les résultats, estimations et économies potentielles affichés sont indicatifs et ne constituent pas une garantie de résultat financier.</p>
+ <p><b>5. Disponibilité du service</b><br>L’éditeur s’efforce d’assurer la disponibilité du service, mais ne garantit pas un fonctionnement continu, sans erreur ou sans interruption. L’éditeur peut modifier, suspendre ou interrompre tout ou partie du service, notamment pour maintenance, sécurité ou évolution de la plateforme.</p>
+ <p><b>6. Suspension ou suppression d’un compte</b><br>L’éditeur peut suspendre ou supprimer un compte en cas de violation des présentes conditions, d’utilisation frauduleuse ou de risque pour la sécurité de la plateforme.</p>
+ <p><b>7. Propriété intellectuelle</b><br>Tous les éléments du service, notamment les textes, interfaces, fonctionnalités, logos et éléments graphiques, sont protégés. Toute reproduction, représentation ou exploitation non autorisée est interdite.</p>
+ <p><b>8. Modification des conditions</b><br>L’éditeur peut modifier les présentes conditions. Les utilisateurs seront informés des changements importants par un message sur le site ou par e-mail. La poursuite de l’utilisation du service après publication des modifications vaut acceptation de celles-ci.</p>
+ <p><b>9. Droit applicable</b><br>Les présentes conditions sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité. À défaut, les tribunaux français seront compétents, sous réserve des règles impératives de compétence applicables.</p>`]
+};
+function showLegal(k){const [t,f]=LEGAL[k];infoBox(t,f())}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-legal]");if(b){e.preventDefault();showLegal(b.dataset.legal)}});
+
+/* ========= Demande d'accès (publique) ========= */
+function requestForm(){
+ const f=$("#dform");
+ f.innerHTML=`<h2>Demander un accès</h2><p style="color:var(--mute);font-size:.9rem">Réservé aux restaurants et fast-foods. L'administrateur examine votre demande, puis vous envoie une invitation.</p>
+ <label for="q_n">Nom de l'établissement</label><input id="q_n" required maxlength="80">
+ <label for="q_t">Type</label><select id="q_t"><option>Restaurant</option><option>Fast-food</option><option>Snack</option></select>
+ <label for="q_v">Ville</label><input id="q_v" required maxlength="60">
+ <label for="q_c">Nom du contact</label><input id="q_c" required maxlength="80">
+ <label for="q_e">E-mail</label><input id="q_e" type="email" required maxlength="120">
+ <label for="q_p">Téléphone (facultatif)</label><input id="q_p" type="tel" maxlength="30">
+ <input id="q_h" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px">
+ <label style="display:flex;gap:.5rem;align-items:flex-start;font-weight:400;margin-top:1rem"><input type="checkbox" id="q_ok" style="width:auto;margin-top:.25rem" required><span>J'accepte que ces informations soient utilisées pour traiter ma demande d'accès.</span></label>
+ <small style="color:var(--mute)">Vos droits (accès, rectification, suppression) sont détaillés dans la politique de confidentialité, en bas de la page de connexion.</small>
+ <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Envoyer la demande</button></div>`;
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=e=>{e.preventDefault();
+  if($("#q_h").value){$("#dlg").close();return}
+  if(!$("#q_ok").checked){toast("Vous devez accepter le traitement de vos données pour envoyer la demande.",1);return}
+  const rq={id:uid(),date:day(0),name:$("#q_n").value.trim(),type:$("#q_t").value,city:$("#q_v").value.trim(),contact:$("#q_c").value.trim(),email:$("#q_e").value.trim().toLowerCase(),phone:$("#q_p").value.trim(),status:"En attente",consent:true,consentAt:new Date().toISOString(),consentVersion:CONSENT_VERSION};
+  if(SB){SB.from("access_requests").insert(TB.requests.to(rq)).then(({error})=>{$("#dlg").close();error?toast("Envoi impossible : "+error.message,1):toast("Demande envoyée. L'administrateur va l'examiner.")});return}
+  db.requests.push(rq);save();$("#dlg").close();toast("Demande envoyée. Démonstration : aucun e-mail n'est réellement envoyé.")};
+ $("#dlg").showModal();
+}
+$("#reqopen").onclick=requestForm;
+
+/* ========= Administrateur : demandes d'accès ========= */
+PAGES.admin.demandes=()=>{const R=db.requests.slice().sort((a,b)=>b.date.localeCompare(a.date));
+ const bd={"En attente":"b-fic","Acceptée":"b-ok","Refusée":"b-urg"};
+ return`<h1>Demandes d'accès</h1><div class="note">Démonstration : l'e-mail d'invitation n'est pas envoyé. Avec Supabase, l'acceptation enverra une vraie invitation et le responsable choisira son mot de passe.</div>`+
+ (R.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Établissement</th><th>Type</th><th>Ville</th><th>Contact</th><th>E-mail</th><th>Téléphone</th><th>Statut</th><th>Actions</th></tr></thead><tbody>`+
+ R.map(q=>`<tr><td>${fdate(q.date)}</td><td><b>${esc(q.name)}</b></td><td>${esc(q.type)}</td><td>${esc(q.city)}</td><td>${esc(q.contact)}</td><td>${esc(q.email)}</td><td>${esc(q.phone||"–")}</td><td><span class="badge ${bd[q.status]}">${esc(q.status)}</span></td><td>${q.status==="En attente"?`<button class="btn sm" data-acc="${q.id}">Accepter</button> <button class="btn sec sm" data-ref="${q.id}">Refuser</button> `:""}<button class="btn danger sm" data-delq="${q.id}">Supprimer</button></td></tr>`).join("")+"</tbody></table></div>":empty("Aucune demande pour le moment."))};
+WIRE["admin.demandes"]=()=>{
+ document.querySelectorAll("[data-acc]").forEach(b=>b.onclick=()=>{const q=db.requests.find(x=>x.id===b.dataset.acc),email=q.email.toLowerCase();
+  if(db.users.some(u=>u.email===email)){toast("Cette adresse e-mail est déjà utilisée par un compte.",1);return}
+  const id=(SB?uid():"r"+uid());db.restaurants.push({id,name:q.name,type:q.type,city:q.city,status:"Actif"});
+  q.status="Acceptée";if(SB){save();sbInvite(email,q.contact,"responsable",id);route();return}db.users.push({email,name:q.contact,role:"responsable",restaurant:id});save();route();toast(`Restaurant créé. Invitation simulée pour ${email}.`)});
+ document.querySelectorAll("[data-ref]").forEach(b=>b.onclick=()=>{db.requests.find(x=>x.id===b.dataset.ref).status="Refusée";save();route();toast("Demande refusée.")});
+ document.querySelectorAll("[data-delq]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cette demande","Les données de contact de cette demande seront effacées.","Supprimer",()=>{db.requests=db.requests.filter(x=>x.id!==b.dataset.delq);save();route();toast("Demande supprimée.")}))};
+
+/* ========= Employé ========= */
+const mineE=()=>mineW().filter(w=>w.by===me.email).sort((a,b)=>b.date.localeCompare(a.date));
+PAGES.employe.saisie=()=>{const W=mineE();
+ return`<h1>Enregistrer un gaspillage</h1><div class="note">Saisie rapide : tout se choisit dans des listes. Le coût est calculé automatiquement avec le prix du catalogue.</div>
+ <div class="card"><form id="fastForm" class="fast"></form></div>
+ <div class="grid" style="margin-top:1.2rem">${stat(W.filter(w=>ago(w.date)===0).length,"saisies aujourd'hui")}${stat(W.length,"saisies au total")}</div>
+ <h2>Mes dernières saisies</h2>`+wasteTable(W.slice(0,8))};
+WIRE["employe.saisie"]=()=>mountWasteForm($("#fastForm"),false);
+PAGES.employe.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
+ return`<h1>Catalogue du restaurant</h1><div class="note">Consultation seule : seul le responsable modifie le catalogue.</div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Péremption</th><th>Prix unitaire</th></tr></thead><tbody>`+
+ P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${expBadge(p.expiry)}</td><td>${pfmt(p.price)} / ${esc(p.unit)}</td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide."))};
+PAGES.employe.mesgaspillages=()=>`<h1>Mes saisies</h1>`+wasteTable(mineE(),{del:1});
+WIRE["employe.mesgaspillages"]=()=>wireDelW();
+
+/* ========= Supabase (données réelles, comptes réels) ========= */
+let sbMe=null,remote={};
+const emptyDb=()=>({restaurants:[],users:[],products:[],purchases:[],wastes:[],requests:[]});
+const nz=v=>v===""||v===undefined?null:v;
+const TB={
+ restaurants:{t:"restaurants",to:r=>({id:r.id,name:r.name,type:r.type,city:nz(r.city),status:r.status}),from:r=>({id:r.id,name:r.name,type:r.type,city:r.city||"",status:r.status})},
+ users:{t:"profiles",to:u=>({id:u.email}),from:p=>({email:p.id,mail:p.email||"",name:p.full_name||p.email||"Membre",role:p.role,restaurant:p.restaurant_id||"",terms:p.terms_version||""})},
+ products:{t:"products",to:p=>({id:p.id,restaurant_id:p.restaurant,name:p.name,category:nz(p.cat),unit:p.unit,unit_cost:p.price,stock_qty:typeof p.qty==="number"?p.qty:null,expiry_date:nz(p.expiry)}),from:p=>({id:p.id,restaurant:p.restaurant_id,name:p.name,cat:p.category||"Autre",unit:p.unit,price:Number(p.unit_cost),qty:p.stock_qty===null?"":Number(p.stock_qty),expiry:p.expiry_date||""})},
+ purchases:{t:"purchases",to:a=>({id:a.id,restaurant_id:a.restaurant,purchased_on:a.date,supplier:nz(a.supplier),product_name:a.product,quantity:a.qty,unit:a.unit,total_paid:a.total,unit_price:a.unitPrice,base_unit:a.baseUnit}),from:a=>({id:a.id,restaurant:a.restaurant_id,date:a.purchased_on,supplier:a.supplier||"",product:a.product_name,qty:Number(a.quantity),unit:a.unit,total:Number(a.total_paid),unitPrice:Number(a.unit_price),baseUnit:a.base_unit||a.unit})},
+ wastes:{t:"waste_logs",to:w=>({id:w.id,restaurant_id:w.restaurant,product_name:w.product,quantity:w.qty,unit:w.unit,estimated_cost:w.cost,reason:w.reason,wasted_on:w.date,created_by:w.by}),from:w=>({id:w.id,restaurant:w.restaurant_id,product:w.product_name,unit:w.unit,qty:Number(w.quantity),cost:Number(w.estimated_cost),reason:w.reason,date:w.wasted_on,by:w.created_by})},
+ requests:{t:"access_requests",to:q=>({id:q.id,restaurant_name:q.name,type:q.type,city:q.city,contact_name:q.contact,email:q.email,phone:nz(q.phone),status:q.status,consent:q.consent,consent_at:q.consentAt,consent_version:q.consentVersion}),from:q=>({id:q.id,date:(q.created_at||"").slice(0,10),name:q.restaurant_name,type:q.type,city:q.city,contact:q.contact_name,email:q.email,phone:q.phone||"",status:q.status,consent:q.consent,consentAt:q.consent_at,consentVersion:q.consent_version})}
+};
+const kid=(k,r)=>k==="users"?r.email:r.id;
+async function sbFetch(k){const c=TB[k],rows=[];
+ for(let i=0;;i+=1000){const {data,error}=await SB.from(c.t).select("*").order("id").range(i,i+999);
+  if(error)throw new Error(c.t+" : "+error.message);rows.push(...data);if(data.length<1000)break}
+ return rows.map(c.from)}
+function snap(k){remote[k]=new Map(db[k].map(r=>[kid(k,r),JSON.stringify(TB[k].to(r))]))}
+async function sbLoad(){const keys=Object.keys(TB),res=await Promise.all(keys.map(sbFetch));db=emptyDb();keys.forEach((k,i)=>{db[k]=res[i];snap(k)})}
+let syncing=null,dirty=false,touchedW=false;
+function sbSync(){dirty=true;if(syncing)return syncing;
+ syncing=(async()=>{try{while(dirty){dirty=false;await syncOnce()}
+   if(touchedW){touchedW=false;db.products=await sbFetch("products");snap("products");route()}}
+  catch(e){touchedW=false;dirty=false;toast(navigator.onLine?"Enregistrement impossible : "+e.message:"Vous êtes hors connexion : la modification n'a pas été enregistrée.",1);
+   try{const id=sbMe&&sbMe.email;await sbLoad();sbMe=db.users.find(u=>u.email===id)||sbMe;route()}catch(_){}}
+  finally{syncing=null}})();return syncing}
+async function syncOnce(){
+ for(const k of ["restaurants","products","purchases","wastes","requests"]){
+  const c=TB[k],sn=remote[k],ins=[],upd=[];
+  db[k].forEach(r=>{const j=JSON.stringify(c.to(r));if(!sn.has(r.id))ins.push([r,j]);else if(sn.get(r.id)!==j)upd.push([r,j])});
+  if(ins.length){const {error}=await SB.from(c.t).insert(ins.map(x=>c.to(x[0])));if(error)throw new Error(error.message);ins.forEach(([r,j])=>sn.set(r.id,j));if(k==="wastes")touchedW=true}
+  for(const [r,j] of upd){const {error}=await SB.from(c.t).update(c.to(r)).eq("id",r.id);if(error)throw new Error(error.message);sn.set(r.id,j)}
+ }
+ for(const k of ["wastes","purchases","products","requests","users","restaurants"]){
+  const sn=remote[k],now=new Set(db[k].map(r=>kid(k,r))),ids=[...sn.keys()].filter(id=>!now.has(id));
+  if(ids.length){const {error}=await SB.from(TB[k].t).delete().in("id",ids);if(error)throw new Error(error.message);ids.forEach(id=>sn.delete(id));if(k==="wastes")touchedW=true}
+ }
+}
+/* ========= Version installable (PWA) ========= */
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e});
+const isStandalone=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+function showInstall(){
+ if(installEvt){installEvt.prompt();installEvt.userChoice.finally(()=>{installEvt=null});return}
+ infoBox("Installer sur mon téléphone",`<p><b>Android (Chrome)</b><br>Ouvrez le menu ⋮ puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».</p><p><b>iPhone (Safari)</b><br>Touchez le bouton Partager (carré avec une flèche), puis « Sur l'écran d'accueil ». Utilisez bien Safari.</p><p><b>Ordinateur (Chrome ou Edge)</b><br>Cliquez sur l'icône d'installation dans la barre d'adresse.</p><p style="color:var(--mute);font-size:.9rem">L'application a besoin d'une connexion internet pour fonctionner.</p>`)}
+document.addEventListener("click",e=>{if(e.target.closest("[data-install]")){e.preventDefault();showInstall()}});
+if(isStandalone())document.querySelectorAll("[data-install]").forEach(b=>b.classList.add("hidden"));
+if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+
+/* ========= Import de factures (PDF ou photo) : lecture par une fonction serveur, validation obligatoire ========= */
+const INV_MAX=4*1024*1024;
+$("#dlg").addEventListener("close",()=>$("#dlg").classList.remove("wide"));
+const b64Of=b=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=()=>ko(new Error("Lecture du fichier impossible."));r.readAsDataURL(b)});
+async function invoicePayload(file){
+ if(file.type==="application/pdf"){if(file.size>INV_MAX)throw new Error("PDF trop volumineux (4 Mo maximum). Réduisez-le ou photographiez la facture.");return{media_type:"application/pdf",data:await b64Of(file)}}
+ if(!/^image\//.test(file.type))throw new Error("Format non pris en charge : choisissez un PDF ou une photo.");
+ const url=URL.createObjectURL(file);
+ try{const img=await new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>ko(new Error("Impossible de lire cette image. Essayez une capture d'écran ou un PDF."));i.src=url});
+  const k=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  const blob=await new Promise(ok=>c.toBlob(ok,"image/jpeg",.85));
+  if(!blob||blob.size>INV_MAX)throw new Error("Image trop volumineuse après compression.");
+  return{media_type:"image/jpeg",data:await b64Of(blob)}}
+ finally{URL.revokeObjectURL(url)}}
+const demoInvoice=()=>({supplier:"Grossiste Démo (exemple)",date:day(0),number:"EX-001",warnings:["Facture d'exemple : simulation, aucun fichier n'a été lu."],lines:[
+ {designation:"Steak haché surgelé",quantity:10,unit:"kg",total_ht:110,tva_pct:5.5,uncertain:false},
+ {designation:"Pain burger",quantity:200,unit:"pièce",total_ht:65,tva_pct:5.5,uncertain:false},
+ {designation:"CARTON SAUCE ALGERIENNE",quantity:3,unit:"carton",total_ht:42,tva_pct:5.5,uncertain:true}]});
+async function extractInvoice(payload){
+ if(!SB)return demoInvoice();
+ const {data,error}=await SB.functions.invoke("extract-invoice",{body:payload});
+ if(error){let m=error.message||"Erreur inconnue.";
+  try{const j=await error.context.json();if(j&&j.error)m=j.error;else throw 0}catch(_){if(/not found|404|Failed to send|FunctionsFetchError/i.test(m))m="La fonction de lecture des factures n'est pas encore installée sur Supabase (voir les étapes d'installation)."}
+  throw new Error(m)}
+ if(data&&data.error)throw new Error(data.error);
+ return data}
+function busy(t){const f=$("#dform");f.onsubmit=e=>e.preventDefault();f.innerHTML=`<h2>${esc(t)}</h2><p style="color:var(--mute)">Cela peut prendre quelques secondes. Ne fermez pas la page.</p>`;blockEsc=true;$("#dlg").showModal()}
+function closeBusy(){blockEsc=false;$("#dlg").close()}
+async function onInvoiceFile(e){const file=e.target.files[0];e.target.value="";if(!file)return;
+ busy("Lecture de la facture…");
+ try{const res=await extractInvoice(await invoicePayload(file));closeBusy();invoiceReview(res)}
+ catch(err){closeBusy();infoBox("Lecture impossible",`<p>${esc(err.message)}</p><p>Vous pouvez saisir les lignes à la main ou importer un fichier CSV.</p>`)}}
+function matchProduct(des){
+ const n=s=>String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+ const d=n(des),dt=new Set(d.split(" ").filter(w=>w.length>2));let best=null,sc=0;
+ db.products.filter(p=>p.restaurant===me.restaurant).forEach(p=>{const pn=n(p.name);let s=0;
+  if(pn&&(d.includes(pn)||pn.includes(d)))s=3;else{const t=pn.split(" ").filter(w=>w.length>2);s=t.filter(w=>dt.has(w)).length/Math.max(1,t.length)*2}
+  if(s>sc){sc=s;best=p}});
+ return sc>=1?best:null}
+function invoiceReview(res){
+ if(!res||!Array.isArray(res.lines)||!res.lines.length){infoBox("Aucune ligne trouvée",`<p>Aucune ligne de produit n'a pu être lue sur ce document.${((res&&res.warnings)||[]).map(w=>"<br>• "+esc(w)).join("")}</p><p>Vous pouvez saisir les lignes à la main ou importer un fichier CSV.</p>`);return}
+ const f=$("#dform"),P=db.products.filter(p=>p.restaurant===me.restaurant);
+ const L=res.lines.map(l=>{const u=normUnit(l.unit||""),m=matchProduct(l.designation||"");
+  return{des:String(l.designation||""),qty:+l.quantity>0?+l.quantity:"",unit:UN[u]?u:"?",raw:String(l.unit||""),ht:typeof l.total_ht==="number"?l.total_ht:null,tva:typeof l.tva_pct==="number"?l.tva_pct:null,unc:!!l.uncertain,name:m?m.name:String(l.designation||"")}});
+ const tot=(l,mode)=>l.ht===null?"":+(mode==="ttc"&&l.tva!==null?l.ht*(1+l.tva/100):l.ht).toFixed(2);
+ const usable=l=>l.qty!==""&&l.unit!=="?"&&l.ht!==null;
+ $("#dlg").classList.add("wide");
+ f.onsubmit=e=>e.preventDefault();
+ f.innerHTML=`<h2>Vérifier la facture</h2>
+ <div class="note">Lecture automatique : vérifiez chaque ligne avant de valider. Rien n'est enregistré tant que vous n'avez pas cliqué sur « Valider ».${(res.warnings||[]).map(w=>"<br>• "+esc(w)).join("")}</div>
+ <div class="invg"><div><label for="iv_s">Fournisseur</label><input id="iv_s" maxlength="60" value="${esc(res.supplier||"")}"></div>
+ <div><label for="iv_d">Date de la facture</label><input id="iv_d" type="date" max="${day(0)}" value="${esc(res.date&&res.date<=day(0)?res.date:day(0))}"></div>
+ <div><label for="iv_m">Montants à utiliser</label><select id="iv_m"><option value="ht">Hors taxes (HT)</option><option value="ttc">TTC (TVA ajoutée)</option></select></div></div>
+ <datalist id="iv_dl">${P.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
+ <div id="iv_l">${L.map((l,i)=>`<div class="invl${usable(l)?"":" off"}" id="iv_w${i}">
+  <label style="display:flex;gap:.5rem;align-items:center;font-weight:400;margin:0 0 .4rem"><input type="checkbox" id="iv_c${i}" style="width:auto" ${usable(l)?"checked":""}><span>Ligne ${i+1} : <b>${esc(l.des)}</b> ${l.unc||!usable(l)?'<span class="badge b-fic">À vérifier</span>':""}</span></label>
+  <div class="invg"><div><label for="iv_p${i}">Produit du catalogue</label><input id="iv_p${i}" list="iv_dl" maxlength="60" value="${esc(l.name)}"></div>
+  <div><label for="iv_q${i}">Quantité</label><input id="iv_q${i}" type="number" min="0" step="any" value="${l.qty}"></div>
+  <div><label for="iv_u${i}">Unité${l.unit==="?"&&l.raw?` (lue : ${esc(l.raw)})`:""}</label><select id="iv_u${i}"><option value="?" ${l.unit==="?"?"selected":""}>— choisir —</option>${Object.keys(UN).map(u=>`<option ${u===l.unit?"selected":""}>${u}</option>`).join("")}</select></div>
+  <div><label for="iv_t${i}">Total (€)</label><input id="iv_t${i}" type="number" min="0" step="any" value="${tot(l,"ht")}"></div></div>
+  <small id="iv_r${i}" style="color:var(--mute)"></small></div>`).join("")}</div>
+ <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Valider les lignes cochées</button></div>`;
+ const calc=i=>{const q=parseFloat($("#iv_q"+i).value),t=parseFloat($("#iv_t"+i).value),u=$("#iv_u"+i).value;
+  $("#iv_r"+i).textContent=(q>0&&t>0&&UN[u])?`Prix unitaire calculé : ${pfmt(t/(q*UN[u].f))} par ${BASEU[UN[u].fam]}`:"Prix unitaire : complétez la quantité, l'unité et le total."};
+ L.forEach((l,i)=>{["q","t"].forEach(k=>$("#iv_"+k+i).oninput=()=>calc(i));$("#iv_u"+i).onchange=()=>calc(i);$("#iv_c"+i).onchange=()=>$("#iv_w"+i).classList.toggle("off",!$("#iv_c"+i).checked);calc(i)});
+ $("#iv_m").onchange=()=>L.forEach((l,i)=>{$("#iv_t"+i).value=tot(l,$("#iv_m").value);calc(i)});
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=e=>{e.preventDefault();let ok=0;const errs=[],date=$("#iv_d").value,sup=$("#iv_s").value.trim();
+  L.forEach((l,i)=>{if(!$("#iv_c"+i).checked)return;
+   const err=addPurchase({date,supplier:sup,product:$("#iv_p"+i).value,cat:"Autre",qty:parseFloat($("#iv_q"+i).value),unit:$("#iv_u"+i).value,total:parseFloat($("#iv_t"+i).value)});
+   if(err)errs.push(`Ligne ${i+1} (${l.des}) : ${err}`);else ok++});
+  if(ok)save();$("#dlg").close();route();
+  if(errs.length)infoBox("Certaines lignes n'ont pas été enregistrées",`<p><b>${ok}</b> ligne(s) enregistrée(s), <b>${errs.length}</b> à corriger :</p><ul>${errs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p>Relancez l'import ou saisissez ces lignes à la main.</p>`);
+  else if(ok)toast(`${ok} ligne(s) enregistrée(s) : prix unitaires calculés, catalogue et stock mis à jour.`);
+  else toast("Aucune ligne cochée : rien n'a été enregistré.",1)};
+ $("#dlg").showModal()}
+
+function csvCell(v){v=String(v==null?"":v);if(/^[=+\-@]/.test(v))v="'"+v;return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function downloadCSV(name,head,rows){const t="\uFEFF"+[head,...rows].map(r=>r.map(csvCell).join(";")).join("\r\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+const dec=n=>String(n).replace(".",",");
+function exportWastes(L){downloadCSV("gaspillages.csv",["date","restaurant","produit","quantite","unite","raison","cout_estime_eur","saisi_par"],L.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(w=>[w.date,rest(w.restaurant).name,w.product,dec(w.qty),w.unit,w.reason,dec(w.cost),uname(w.by)]));toast("Export téléchargé.")}
+function exportPurchases(L){downloadCSV("achats.csv",["date","fournisseur","produit","quantite","unite","total_paye_eur","prix_unitaire_eur"],L.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>[a.date,a.supplier,a.product,dec(a.qty),a.unit,dec(a.total),dec(a.unitPrice)]));toast("Export téléchargé.")}
+async function sbInvite(email,name,role,restaurant){
+ await sbSync();
+ const {error}=await SB.from("pending_invites").upsert({email:email.toLowerCase(),role,restaurant_id:restaurant,full_name:name},{onConflict:"email"});
+ toast(error?"Invitation impossible : "+error.message:"Invitation enregistrée. Dites à cette personne de cliquer sur « Créer mon compte » avec l'adresse "+email+".",!!error)}
+const frErr=m=>/invalid login/i.test(m)?"E-mail ou mot de passe incorrect.":/not confirmed/i.test(m)?"Confirmez d'abord votre adresse e-mail grâce au lien reçu par e-mail.":/already registered/i.test(m)?"Un compte existe déjà avec cet e-mail : connectez-vous ou utilisez « Mot de passe oublié ».":/rate limit|too many/i.test(m)?"Trop de tentatives ou d'e-mails envoyés : réessayez dans quelques minutes.":m;
+function loginMsg(t,ok){const e=$("#lerr");e.textContent=t;e.classList.remove("hidden");e.style.background=ok?"var(--g2)":"";e.style.color=ok?"var(--g)":""}
+async function sbEnter(session){
+ try{await sbLoad()}catch(e){await SB.auth.signOut();db=emptyDb();sbMe=null;boot();loginMsg("Chargement des données impossible : "+e.message);return}
+ const u=db.users.find(x=>x.email===session.user.id);
+ if(!u||(u.role!=="admin"&&!db.restaurants.some(r=>r.id===u.restaurant))){
+  await SB.auth.signOut();db=emptyDb();sbMe=null;boot();
+  loginMsg(u?"Ce restaurant est suspendu ou en attente de validation.":"Aucun accès n'est associé à ce compte : une invitation de l'administrateur ou de votre responsable est nécessaire.");return}
+ if(u.terms!==CONSENT_VERSION){termsGate(u);return}enterApp(u)}
+let blockEsc=false;
+$("#dlg").addEventListener("cancel",e=>{if(blockEsc)e.preventDefault()});
+function enterApp(u){sbMe=u;$("#lerr").classList.add("hidden");$("#pw").value="";location.hash="";boot()}
+function termsGate(u){const f=$("#dform");blockEsc=true;
+ f.innerHTML=`<h2>Conditions et confidentialité</h2><p style="color:var(--mute);font-size:.9rem">Pour continuer, lisez et acceptez ces textes (version ${CONSENT_VERSION}).</p>
+ <details><summary><b>Conditions d'utilisation</b></summary>${LEGAL.cgu[1]()}</details>
+ <details><summary><b>Politique de confidentialité</b></summary>${LEGAL.privacy[1]()}</details>
+ <label style="display:flex;gap:.5rem;align-items:flex-start;font-weight:400;margin-top:1rem"><input type="checkbox" id="t_ok" style="width:auto;margin-top:.25rem"><span>J'ai lu et j'accepte ces conditions.</span></label>
+ <div class="acts"><button type="button" class="btn sec" id="t_out">Me déconnecter</button><button class="btn">Continuer</button></div>`;
+ $("#t_out").onclick=async()=>{blockEsc=false;$("#dlg").close();await SB.auth.signOut();sbMe=null;db=emptyDb();boot()};
+ f.onsubmit=async e=>{e.preventDefault();if(!$("#t_ok").checked){toast("Cochez la case pour continuer.",1);return}
+  const {error}=await SB.rpc("accept_terms",{v:CONSENT_VERSION});
+  if(error&&!(error.code==="PGRST202"||/could not find|function/i.test(error.message||""))){toast("Enregistrement impossible : "+error.message,1);return}
+  if(error)toast("Pensez à exécuter le fichier supabase-etape3.sql : l'acceptation n'a pas pu être enregistrée.",1);
+  u.terms=CONSENT_VERSION;blockEsc=false;$("#dlg").close();enterApp(u)};
+ $("#dlg").showModal()}
+function signupForm(){const f=$("#dform");
+ f.innerHTML=`<h2>Créer mon compte</h2><p style="color:var(--mute);font-size:.9rem">Utilisez l'adresse e-mail à laquelle vous avez été invité(e). Sans invitation, le compte n'aura accès à aucune donnée.</p>
+ <label for="s_e">E-mail</label><input id="s_e" type="email" required autocomplete="username">
+ <label for="s_p">Mot de passe (8 caractères minimum)</label><input id="s_p" type="password" required autocomplete="new-password">
+ <label for="s_q">Confirmer le mot de passe</label><input id="s_q" type="password" required autocomplete="new-password">
+ <small style="color:var(--mute)">Les conditions d'utilisation et la politique de confidentialité vous seront présentées à la première connexion ; vous devrez les accepter pour continuer.</small>
+ <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Créer mon compte</button></div>`;
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=async e=>{e.preventDefault();const p=$("#s_p").value;
+  if(p.length<8){toast("Le mot de passe doit contenir au moins 8 caractères.",1);return}
+  if(p!==$("#s_q").value){toast("Les deux mots de passe ne correspondent pas.",1);return}
+  const {data,error}=await SB.auth.signUp({email:$("#s_e").value.trim(),password:p,options:{emailRedirectTo:location.origin+location.pathname}});
+  if(error){toast(frErr(error.message),1);return}
+  $("#dlg").close();
+  if(data.session)await sbEnter(data.session);
+  else infoBox("Vérifiez votre boîte mail","<p>Un e-mail de confirmation vous a été envoyé. Cliquez sur le lien, puis revenez vous connecter ici. Pensez à regarder les courriers indésirables.</p>")};
+ $("#dlg").showModal()}
+function forgotForm(){const f=$("#dform");
+ f.innerHTML=`<h2>Mot de passe oublié</h2><label for="o_e">Votre adresse e-mail</label><input id="o_e" type="email" required value="${esc($("#em").value)}">
+ <div class="acts"><button type="button" class="btn sec" id="fc">Annuler</button><button class="btn">Envoyer le lien</button></div>`;
+ $("#fc").onclick=()=>$("#dlg").close();
+ f.onsubmit=async e=>{e.preventDefault();
+  const {error}=await SB.auth.resetPasswordForEmail($("#o_e").value.trim(),{redirectTo:location.origin+location.pathname});
+  $("#dlg").close();toast(error?frErr(error.message):"Si cette adresse a un compte, un e-mail de réinitialisation vient d'être envoyé.",!!error)};
+ $("#dlg").showModal()}
+function newPasswordForm(){const f=$("#dform");
+ f.innerHTML=`<h2>Nouveau mot de passe</h2><label for="n_p">Nouveau mot de passe (8 caractères minimum)</label><input id="n_p" type="password" required autocomplete="new-password">
+ <div class="acts"><button class="btn">Enregistrer</button></div>`;
+ f.onsubmit=async e=>{e.preventDefault();const p=$("#n_p").value;if(p.length<8){toast("8 caractères minimum.",1);return}
+  const {error}=await SB.auth.updateUser({password:p});if(error){toast(frErr(error.message),1);return}
+  $("#dlg").close();toast("Mot de passe modifié.")};
+ $("#dlg").showModal()}
+async function sbInit(){
+ db=emptyDb();
+ $(".demo").classList.add("hidden");$("#sbLinks").classList.remove("hidden");$("#em").autocomplete="username";$("#pw").autocomplete="current-password";
+ SB.auth.onAuthStateChange(ev=>{if(ev==="PASSWORD_RECOVERY")setTimeout(newPasswordForm,0)});
+ $("#lform").onsubmit=async e=>{e.preventDefault();loginMsg("Connexion en cours…",true);
+  const {data,error}=await SB.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
+  if(error){loginMsg(frErr(error.message));return}
+  await sbEnter(data.session)};
+ $("#logout").onclick=async()=>{await SB.auth.signOut();sbMe=null;db=emptyDb();remote={};location.hash="";boot();toast("Vous êtes déconnecté.")};
+ $("#signupBtn").onclick=signupForm;$("#forgotBtn").onclick=forgotForm;
+ const {data}=await SB.auth.getSession();
+ if(data.session)await sbEnter(data.session);else boot()}
+function loadLib(src){return new Promise((ok,ko)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>ko(new Error("chargement impossible : "+src));document.head.appendChild(s)})}
+async function start(){
+ if(CFG.supabaseUrl){
+  try{
+   if(!window.supabase)await loadLib("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js").catch(()=>loadLib("https://unpkg.com/@supabase/supabase-js@2.117.1/dist/umd/supabase.js"));
+   SB=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseKey);DEMO=false;
+  }catch(e){SB=null;offlineScreen("Impossible de charger le service de données ("+e.message+"). Vérifiez votre connexion internet, puis réessayez.");return}
+ }
+ setBanner();
+ if(SB){try{await sbInit()}catch(e){showErr("Erreur de connexion à Supabase : "+e.message);boot()}}else boot()}
+start();
+</script>
+</body>
+</html>
