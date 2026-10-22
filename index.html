@@ -124,7 +124,7 @@ aside .linkbtn{color:#9fb8a8}
   <main>
     <header>
       <div class="who"><button id="burger" class="btn sec sm" aria-label="Ouvrir le menu">☰ Menu</button><strong id="uname"></strong><span class="role" id="urole"></span><span id="urest" style="color:var(--mute)"></span></div>
-      <button class="btn sec sm" id="logout">Se déconnecter</button>
+      <div style="display:flex;gap:.5rem"><button class="btn sec sm hidden" id="refresh">Actualiser</button><button class="btn sec sm" id="logout">Se déconnecter</button></div>
     </header>
     <div id="view"></div>
   </main>
@@ -359,24 +359,49 @@ PAGES.admin.rapports=()=>{const W30=last30(db.wastes),c=sum(W30,w=>w.cost);
  <div class="card"><h2>Coût par raison</h2>${bars(group(W30,w=>w.reason,w=>w.cost))}</div><br>
  <div class="card"><h2>Produits les plus gaspillés</h2>${bars(group(W30,w=>w.product,w=>w.cost))}</div>`};
 const restFields=[{k:"name",l:"Nom de l'établissement"},{k:"type",l:"Type",opts:["Restaurant","Fast-food"]},{k:"city",l:"Ville"}];
-PAGES.admin.restaurants=()=>`<div class="bar-top"><h1>Restaurants inscrits</h1><button class="btn" id="addr">Ajouter un restaurant</button></div>
- <div class="tw"><table><thead><tr><th>Établissement</th><th>Type</th><th>Ville</th><th>Responsable</th><th>Statut</th><th>Coût 30 j</th><th>Actions</th></tr></thead><tbody>`+
- db.restaurants.map(r=>{const m=db.users.find(u=>u.restaurant===r.id&&u.role==="responsable");
-  return`<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.type)}</td><td>${esc(r.city)}</td><td>${m?esc(m.name):"–"}</td><td><span class="badge ${r.status==="Actif"?"b-ok":"b-urg"}">${r.status}</span></td><td>${eur(sum(last30(db.wastes.filter(w=>w.restaurant===r.id)),w=>w.cost))}</td>
-  <td><button class="btn sec sm" data-edit="${r.id}">Modifier</button> <button class="btn sec sm" data-tog="${r.id}">${r.status==="Actif"?"Suspendre":"Réactiver"}</button> <button class="btn danger sm" data-del="${r.id}">Supprimer</button></td></tr>`}).join("")+`</tbody></table></div>`;
+const restFieldsAdmin=[{k:"name",l:"Nom de l'établissement"},{k:"type",l:"Type",opts:["Restaurant","Fast-food","Snack"]},{k:"city",l:"Ville"},{k:"cname",l:"Nom du responsable",opt:1},{k:"cmail",l:"E-mail du responsable",t:"email",opt:1},{k:"cphone",l:"Téléphone du responsable",t:"tel",opt:1},{k:"status",l:"Statut",opts:["Actif","En attente","Suspendu"]}];
+const respOf=id=>db.users.find(u=>u.restaurant===id&&u.role==="responsable");
+const cInfo=r=>{const m=respOf(r.id);return{name:r.cname||(m&&m.name)||"",mail:r.cmail||(m&&(m.mail||(SB?"":m.email)))||"",phone:r.cphone||""}};
+const mailLink=m=>m?`<a href="mailto:${esc(m)}">${esc(m)}</a>`:"–";
+const telLink=t=>t?`<a href="tel:${esc(String(t).replace(/[^\d+]/g,""))}">${esc(t)}</a>`:"–";
+const stBadge=s=>`<span class="badge ${s==="Actif"?"b-ok":s==="En attente"?"b-fic":"b-urg"}">${esc(s)}</span>`;
+PAGES.admin.restaurants=()=>`<div class="bar-top"><h1>Restaurants inscrits</h1><button class="btn" id="addr">Ajouter un restaurant</button></div>`+
+ (db.restaurants.length?`<div class="tw"><table><thead><tr><th>Restaurant</th><th>Responsable</th><th>E-mail</th><th>Téléphone</th><th>Statut</th><th>Actions</th></tr></thead><tbody>`+
+ db.restaurants.map(r=>{const c=cInfo(r);
+  return`<tr><td><b>${esc(r.name)}</b><br><small style="color:var(--mute)">${esc(r.type)}${r.city?" · "+esc(r.city):""}</small></td><td>${esc(c.name)||"–"}</td><td>${mailLink(c.mail)}</td><td>${telLink(c.phone)}</td><td>${stBadge(r.status)}</td><td><button class="btn sec sm" data-view="${r.id}">Voir</button> <button class="btn sec sm" data-edit="${r.id}">Modifier</button></td></tr>`}).join("")+`</tbody></table></div>`
+ :empty("Aucun restaurant pour le moment. Cliquez sur « Ajouter un restaurant »."));
+function editRestaurant(id){const r=db.restaurants.find(x=>x.id===id);if(!r)return;const c=cInfo(r);
+ openForm("Modifier le restaurant",restFieldsAdmin,{...r,cname:c.name,cmail:c.mail,cphone:c.phone},o=>{o.cmail=(o.cmail||"").toLowerCase();Object.assign(r,o);save();route();toast("Restaurant modifié.")})}
+function toggleRestaurant(id){const r=db.restaurants.find(x=>x.id===id);if(!r)return;
+ r.status=r.status==="Actif"?"Suspendu":"Actif";save();route();toast(`${r.name} : ${r.status==="Actif"?"réactivé":"suspendu"}.`)}
+function deleteRestaurant(id){confirmBox("Supprimer ce restaurant","Son catalogue, son équipe et tous ses gaspillages seront aussi supprimés.","Supprimer",()=>{
+ db.restaurants=db.restaurants.filter(r=>r.id!==id);db.products=db.products.filter(p=>p.restaurant!==id);
+ db.wastes=db.wastes.filter(w=>w.restaurant!==id);db.purchases=db.purchases.filter(a=>a.restaurant!==id);db.users=db.users.filter(u=>u.restaurant!==id);save();route();toast("Restaurant supprimé.")})}
+function restaurantView(id){const r=db.restaurants.find(x=>x.id===id);if(!r)return;const c=cInfo(r),m=respOf(id),f=$("#dform");
+ f.onsubmit=e=>e.preventDefault();
+ f.innerHTML=`<h2>${esc(r.name)}</h2><p>${stBadge(r.status)} ${esc(r.type)}${r.city?" · "+esc(r.city):""}</p>
+ <div class="tw" style="margin:.6rem 0"><table><tbody>
+ <tr><th>Responsable</th><td>${esc(c.name)||"–"}</td></tr>
+ <tr><th>E-mail</th><td>${mailLink(c.mail)}</td></tr>
+ <tr><th>Téléphone</th><td>${telLink(c.phone)}</td></tr>
+ <tr><th>Compte du responsable</th><td>${m?"Créé":"Pas encore créé"}</td></tr>
+ <tr><th>Employés</th><td>${db.users.filter(u=>u.restaurant===id&&u.role==="employe").length}</td></tr>
+ <tr><th>Produits au catalogue</th><td>${db.products.filter(p=>p.restaurant===id).length}</td></tr>
+ <tr><th>Coût du gaspillage (30 jours)</th><td>${eur(sum(last30(db.wastes.filter(w=>w.restaurant===id)),w=>w.cost))}</td></tr></tbody></table></div>
+ <div class="acts" style="flex-wrap:wrap"><button type="button" class="btn danger sm" id="rv_del">Supprimer</button><button type="button" class="btn sec sm" id="rv_tog">${r.status==="Actif"?"Suspendre":"Réactiver"}</button><button type="button" class="btn sec sm" id="rv_edit">Modifier</button><button type="button" class="btn" id="rv_close">Fermer</button></div>`;
+ $("#rv_close").onclick=()=>$("#dlg").close();
+ $("#rv_edit").onclick=()=>{$("#dlg").close();editRestaurant(id)};
+ $("#rv_tog").onclick=()=>{$("#dlg").close();toggleRestaurant(id)};
+ $("#rv_del").onclick=()=>{$("#dlg").close();deleteRestaurant(id)};
+ $("#dlg").showModal()}
 WIRE["admin.restaurants"]=()=>{
- $("#addr").onclick=()=>openForm("Ajouter un restaurant",[...restFields,{k:"mname",l:"Nom du responsable"},{k:"memail",l:"E-mail du responsable",t:"email"}],{type:"Restaurant"},o=>{
+ $("#addr").onclick=()=>openForm("Ajouter un restaurant",[...restFields,{k:"mname",l:"Nom du responsable"},{k:"memail",l:"E-mail du responsable",t:"email"},{k:"mphone",l:"Téléphone du responsable (facultatif)",t:"tel",opt:1}],{type:"Restaurant"},o=>{
   const email=o.memail.toLowerCase();if(db.users.some(u=>u.email===email)){toast("Cette adresse e-mail existe déjà.",1);return}
-  const id=(SB?uid():"r"+uid());db.restaurants.push({id,name:o.name,type:o.type,city:o.city,status:"Actif"});
+  const id=(SB?uid():"r"+uid());db.restaurants.push({id,name:o.name,type:o.type,city:o.city,status:"Actif",cname:o.mname,cmail:email,cphone:o.mphone||""});
   if(SB){save();sbInvite(email,o.mname,"responsable",id);route();return}
   db.users.push({email,name:o.mname,role:"responsable",restaurant:id});save();route();toast("Restaurant ajouté (démonstration : aucun e-mail envoyé).")});
- document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.edit);
-  openForm("Modifier le restaurant",restFields,r,o=>{Object.assign(r,o);save();route();toast("Restaurant modifié.")})});
- document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const r=db.restaurants.find(x=>x.id===b.dataset.tog);
-  r.status=r.status==="Actif"?"Suspendu":"Actif";save();route();toast(`${r.name} : ${r.status==="Actif"?"réactivé":"suspendu"}.`)});
- document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>confirmBox("Supprimer ce restaurant","Son catalogue, son équipe et tous ses gaspillages seront aussi supprimés.","Supprimer",()=>{
-  const id=b.dataset.del;db.restaurants=db.restaurants.filter(r=>r.id!==id);db.products=db.products.filter(p=>p.restaurant!==id);
-  db.wastes=db.wastes.filter(w=>w.restaurant!==id);db.purchases=db.purchases.filter(a=>a.restaurant!==id);db.users=db.users.filter(u=>u.restaurant!==id);save();route();toast("Restaurant supprimé.")}))};
+ document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>restaurantView(b.dataset.view));
+ document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editRestaurant(b.dataset.edit))};
 
 /* ========= Responsable de restaurant ========= */
 PAGES.responsable.accueil=()=>{const W=mineW(),W30=last30(W),v=variation(W),c=sum(W30,w=>w.cost);
@@ -419,8 +444,8 @@ WIRE["responsable.restaurant"]=()=>{
  document.querySelectorAll("[data-delu]").forEach(b=>b.onclick=()=>confirmBox("Retirer cet employé","Ses saisies passées sont conservées.","Retirer",()=>{db.users=db.users.filter(u=>u.email!==b.dataset.delu);save();route();toast("Employé retiré.")}))};
 
 /* ========= Achats et factures (responsable) ========= */
-function infoBox(title,html){const f=$("#dform");f.onsubmit=e=>e.preventDefault();
- f.innerHTML=`<h2>${esc(title)}</h2>${html}<div class="acts"><button type="button" class="btn" id="fc">Fermer</button></div>`;$("#fc").onclick=()=>$("#dlg").close();$("#dlg").showModal()}
+function infoBox(title,html,label){const f=$("#dform");f.onsubmit=e=>e.preventDefault();
+ f.innerHTML=`<h2>${esc(title)}</h2>${html}<div class="acts"><button type="button" class="btn" id="fc">${esc(label||"Fermer")}</button></div>`;$("#fc").onclick=()=>$("#dlg").close();$("#dlg").showModal()}
 function addPurchase(l){
  l.product=(l.product||"").trim();
  if(!l.product)return"Indiquez le produit.";
@@ -554,7 +579,7 @@ PAGES.admin.demandes=()=>{const R=db.requests.slice().sort((a,b)=>b.date.localeC
 WIRE["admin.demandes"]=()=>{
  document.querySelectorAll("[data-acc]").forEach(b=>b.onclick=()=>{const q=db.requests.find(x=>x.id===b.dataset.acc),email=q.email.toLowerCase();
   if(db.users.some(u=>u.email===email)){toast("Cette adresse e-mail est déjà utilisée par un compte.",1);return}
-  const id=(SB?uid():"r"+uid());db.restaurants.push({id,name:q.name,type:q.type,city:q.city,status:"Actif"});
+  const id=(SB?uid():"r"+uid());db.restaurants.push({id,name:q.name,type:q.type,city:q.city,status:"Actif",cname:q.contact||"",cmail:(q.email||"").toLowerCase(),cphone:q.phone||""});
   q.status="Acceptée";if(SB){save();sbInvite(email,q.contact,"responsable",id);route();return}db.users.push({email,name:q.contact,role:"responsable",restaurant:id});save();route();toast(`Restaurant créé. Invitation simulée pour ${email}.`)});
  document.querySelectorAll("[data-ref]").forEach(b=>b.onclick=()=>{db.requests.find(x=>x.id===b.dataset.ref).status="Refusée";save();route();toast("Demande refusée.")});
  document.querySelectorAll("[data-delq]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cette demande","Les données de contact de cette demande seront effacées.","Supprimer",()=>{db.requests=db.requests.filter(x=>x.id!==b.dataset.delq);save();route();toast("Demande supprimée.")}))};
@@ -587,13 +612,13 @@ WIRE["admin.catalogue"]=()=>{
 /* ========= Employé ========= */
 const mineE=()=>mineW().filter(w=>w.by===me.email).sort((a,b)=>b.date.localeCompare(a.date));
 PAGES.employe.saisie=()=>{const W=mineE();
- return`<h1>Enregistrer un gaspillage</h1><div class="note">Saisie rapide : tout se choisit dans des listes. Le coût est calculé automatiquement avec le prix du catalogue.</div>
+ return`<h1>Enregistrer un gaspillage</h1>
  <div class="card"><form id="fastForm" class="fast"></form></div>
  <div class="grid" style="margin-top:1.2rem">${stat(W.filter(w=>ago(w.date)===0).length,"saisies aujourd'hui")}${stat(W.length,"saisies au total")}</div>
  <h2>Mes dernières saisies</h2>`+wasteTable(W.slice(0,8))};
 WIRE["employe.saisie"]=()=>mountWasteForm($("#fastForm"),false);
 PAGES.employe.catalogue=()=>{const P=db.products.filter(p=>p.restaurant===me.restaurant);
- return`<h1>Catalogue du restaurant</h1><div class="note">Consultation seule : seul le responsable modifie le catalogue.</div>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Péremption</th><th>Prix unitaire</th></tr></thead><tbody>`+
+ return`<h1>Catalogue du restaurant</h1>`+(P.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Catégorie</th><th>Péremption</th><th>Prix unitaire</th></tr></thead><tbody>`+
  P.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.cat)}</td><td>${expBadge(p.expiry)}</td><td>${pfmt(p.price)} / ${esc(p.unit)}</td></tr>`).join("")+"</tbody></table></div>":empty("Le catalogue est vide."))};
 PAGES.employe.mesgaspillages=()=>`<h1>Mes saisies</h1>`+wasteTable(mineE(),{del:1});
 WIRE["employe.mesgaspillages"]=()=>wireDelW();
@@ -603,7 +628,7 @@ let sbMe=null,remote={};
 const emptyDb=()=>({restaurants:[],users:[],products:[],purchases:[],wastes:[],requests:[]});
 const nz=v=>v===""||v===undefined?null:v;
 const TB={
- restaurants:{t:"restaurants",to:r=>({id:r.id,name:r.name,type:r.type,city:nz(r.city),status:r.status}),from:r=>({id:r.id,name:r.name,type:r.type,city:r.city||"",status:r.status})},
+ restaurants:{t:"restaurants",to:r=>({id:r.id,name:r.name,type:r.type,city:nz(r.city),status:r.status,contact_name:nz(r.cname),contact_email:nz(r.cmail),contact_phone:nz(r.cphone)}),from:r=>({id:r.id,name:r.name,type:r.type,city:r.city||"",status:r.status,cname:r.contact_name||"",cmail:r.contact_email||"",cphone:r.contact_phone||""})},
  users:{t:"profiles",to:u=>({id:u.email}),from:p=>({email:p.id,mail:p.email||"",name:p.full_name||p.email||"Membre",role:p.role,restaurant:p.restaurant_id||"",terms:p.terms_version||""})},
  products:{t:"products",to:p=>({id:p.id,restaurant_id:p.restaurant,name:p.name,category:nz(p.cat),unit:p.unit,unit_cost:p.price,stock_qty:typeof p.qty==="number"?p.qty:null,expiry_date:nz(p.expiry)}),from:p=>({id:p.id,restaurant:p.restaurant_id,name:p.name,cat:p.category||"Autre",unit:p.unit,price:Number(p.unit_cost),qty:p.stock_qty===null?"":Number(p.stock_qty),expiry:p.expiry_date||""})},
  purchases:{t:"purchases",to:a=>({id:a.id,restaurant_id:a.restaurant,purchased_on:a.date,supplier:nz(a.supplier),product_name:a.product,quantity:a.qty,unit:a.unit,total_paid:a.total,unit_price:a.unitPrice,base_unit:a.baseUnit}),from:a=>({id:a.id,restaurant:a.restaurant_id,date:a.purchased_on,supplier:a.supplier||"",product:a.product_name,qty:Number(a.quantity),unit:a.unit,total:Number(a.total_paid),unitPrice:Number(a.unit_price),baseUnit:a.base_unit||a.unit})},
@@ -616,7 +641,18 @@ async function sbFetch(k){const c=TB[k],rows=[];
   if(error)throw new Error(c.t+" : "+error.message);rows.push(...data);if(data.length<1000)break}
  return rows.map(c.from)}
 function snap(k){remote[k]=new Map(db[k].map(r=>[kid(k,r),JSON.stringify(TB[k].to(r))]))}
-async function sbLoad(){const keys=Object.keys(TB),res=await Promise.all(keys.map(sbFetch));db=emptyDb();keys.forEach((k,i)=>{db[k]=res[i];snap(k)})}
+async function sbFetchAll(){const keys=Object.keys(TB),res=await Promise.all(keys.map(sbFetch)),nd=emptyDb(),nr={};
+ keys.forEach((k,i)=>{nd[k]=res[i];nr[k]=new Map(nd[k].map(r=>[kid(k,r),JSON.stringify(TB[k].to(r))]))});return{nd,nr}}
+async function sbLoad(){const {nd,nr}=await sbFetchAll();db=nd;remote=nr}
+/* Actualisation : récupère les changements faits ailleurs (autre appareil, autre utilisateur) sans perdre une saisie en cours */
+let lastRef=0;
+const dbSig=d=>JSON.stringify(Object.keys(TB).map(k=>d[k].map(r=>JSON.stringify(r)).sort()));
+async function sbRefresh(force){
+ if(!SB||!sbMe||syncing||dirty||$("#dlg").open)return false;
+ if(!force&&Date.now()-lastRef<5000)return false;lastRef=Date.now();
+ try{const id=sbMe.email,{nd,nr}=await sbFetchAll();
+  if(syncing||dirty||$("#dlg").open||dbSig(nd)===dbSig(db))return false;
+  db=nd;remote=nr;sbMe=db.users.find(u=>u.email===id)||sbMe;me=sbMe;route();return true}catch(e){return false}}
 let syncing=null,dirty=false,touchedW=false;
 function sbSync(){dirty=true;if(syncing)return syncing;
  syncing=(async()=>{try{while(dirty){dirty=false;await syncOnce()}
@@ -638,11 +674,16 @@ async function syncOnce(){
 }
 /* ========= Version installable (PWA) ========= */
 let installEvt=null;
-window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e});
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;document.querySelectorAll("[data-install]").forEach(b=>b.textContent="Installer l'application")});
 const isStandalone=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
 function showInstall(){
  if(installEvt){installEvt.prompt();installEvt.userChoice.finally(()=>{installEvt=null});return}
- infoBox("Installer sur mon téléphone",`<p><b>Android (Chrome)</b><br>Ouvrez le menu ⋮ puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».</p><p><b>iPhone (Safari)</b><br>Touchez le bouton Partager (carré avec une flèche), puis « Sur l'écran d'accueil ». Utilisez bien Safari.</p><p><b>Ordinateur (Chrome ou Edge)</b><br>Cliquez sur l'icône d'installation dans la barre d'adresse.</p><p style="color:var(--mute);font-size:.9rem">L'application a besoin d'une connexion internet pour fonctionner.</p>`)}
+ const ua=navigator.userAgent||"",ios=/iPhone|iPad|iPod/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1),android=/Android/i.test(ua);
+ const notSafari=ios&&/CriOS|FxiOS|EdgiOS|OPiOS|FBAN|FBAV|Instagram|Line\//i.test(ua);
+ const sIOS=`<p><b>Sur iPhone ou iPad (Safari)</b></p><ol><li>Touchez le bouton <b>Partager</b> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px" role="img" aria-label="icône Partager"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg> (un carré avec une flèche vers le haut), en bas de l'écran.</li><li>Faites défiler le menu et touchez <b>« Sur l'écran d'accueil »</b>.</li><li>Touchez <b>« Ajouter »</b> en haut à droite.</li></ol>`+(notSafari?`<div class="note">Vous n'êtes pas dans Safari : copiez le lien de ce site et ouvrez-le dans <b>Safari</b> pour pouvoir l'installer.</div>`:"");
+ const sAnd=`<p><b>Sur Android (Chrome)</b></p><ol><li>Touchez le menu <b>⋮</b> en haut à droite de Chrome.</li><li>Touchez <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.</li><li>Confirmez avec <b>« Installer »</b> ou <b>« Ajouter »</b>.</li></ol>`;
+ const sPC=`<p><b>Ordinateur (Chrome ou Edge)</b><br>Cliquez sur l'icône d'installation à droite de la barre d'adresse.</p>`;
+ infoBox("Installer sur mon téléphone",`<div class="note">Cette fenêtre explique la marche à suivre : l'installation se fait avec le menu de votre navigateur, pas avec le bouton « Fermer ».</div>`+(ios?sIOS:android?sAnd:sAnd+sIOS+sPC)+`<p style="color:var(--mute);font-size:.9rem">L'application a besoin d'une connexion internet pour fonctionner.</p>`,"J'ai compris")}
 document.addEventListener("click",e=>{if(e.target.closest("[data-install]")){e.preventDefault();showInstall()}});
 if(isStandalone())document.querySelectorAll("[data-install]").forEach(b=>b.classList.add("hidden"));
 if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
@@ -724,6 +765,8 @@ async function sbInit(){
   await sbEnter(data.session)};
  $("#logout").onclick=async()=>{await SB.auth.signOut();sbMe=null;db=emptyDb();remote={};location.hash="";boot();toast("Vous êtes déconnecté.")};
  $("#signupBtn").onclick=signupForm;$("#forgotBtn").onclick=forgotForm;
+ $("#refresh").classList.remove("hidden");$("#refresh").onclick=async()=>{const c=await sbRefresh(true);toast(c?"Données actualisées.":"Vous avez déjà les dernières données.")};
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)sbRefresh()});window.addEventListener("hashchange",()=>sbRefresh(location.hash==="#/demandes"));
  const {data}=await SB.auth.getSession();
  if(data.session)await sbEnter(data.session);else boot()}
 function loadLib(src){return new Promise((ok,ko)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>ko(new Error("chargement impossible : "+src));document.head.appendChild(s)})}
