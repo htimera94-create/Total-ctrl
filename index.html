@@ -144,7 +144,7 @@ window.onerror=(m,s,l)=>{const b=document.getElementById("errbox");b.classList.r
 const CFG={supabaseUrl:"https://fsscahhpgdaaavzwmeef.supabase.co",supabaseKey:"sb_publishable_NcsiR8h1F5UpsfsFVAdVmQ_sOlyx4Ge"};
 /* Informations légales : renseignez-les ici UNE fois ; elles apparaissent dans les mentions légales et la politique de confidentialité.
    Les champs regionBase et fournisseurEmail sont facultatifs : vides, la ligne correspondante n'apparaît pas dans les textes. */
-const LEGAL_INFO={editeur:"Hamidou Timera",statut:"Auto-entrepreneur",siren:"109 364 752",siret:"109 364 752 00013",tva:"non applicable",adresse:"119B Boulevard de la République, 77420 Champs-sur-Marne, France",email:"h.timera94@gmail.com",directeur:"Hamidou Timera",regionBase:"Union européenne, Suède (Stockholm, région eu-north-1)",fournisseurEmail:"",dureeComptes:"12 mois après la suppression du compte",dureeGaspillage:"3 ans",dureeAchats:"3 ans",dureeDemandes:"12 mois",dureeSecurite:"12 mois"};
+const LEGAL_INFO={editeur:"Hamidou Timera",statut:"Auto-entrepreneur",siren:"109 364 752",siret:"109 364 752 00013",tva:"non applicable",adresse:"119B Boulevard de la République, 77420 Champs-sur-Marne, France",email:"h.timera94@gmail.com",directeur:"Hamidou Timera",regionBase:"Union européenne, Suède (Stockholm, région eu-north-1)",fournisseurEmail:"Brevo",dureeComptes:"12 mois après la suppression du compte",dureeGaspillage:"3 ans",dureeAchats:"3 ans",dureeDemandes:"12 mois",dureeSecurite:"12 mois"};
 let SB=null,DEMO=true;
 const showErr=m=>{const b=document.getElementById("errbox");b.classList.remove("hidden");b.textContent=m};
 function offlineScreen(m){$("#login").classList.add("hidden");$("#app").classList.add("hidden");$("#offmsg").textContent=m;$("#offline").classList.remove("hidden")}
@@ -345,7 +345,7 @@ const ecoStat=W=>{const e=eco(W);return stat(e.v===null?"–":eur(e.v),`baisse d
 const potStat=c=>stat(eur(c*.2),"économies potentielles estimées<br><small>hypothèse : −20 % de gaspillage</small>");
 const volTxt=W=>[num(baseQty(W,"m"))+" kg",num(baseQty(W,"v"))+" L",num(baseQty(W,"n"))+" pièces"].join(" · ");
 PAGES.admin.accueil=()=>{const W=db.wastes,W30=last30(W),R=db.restaurants,c=sum(W30,w=>w.cost);
- return`<h1>Vue d'ensemble de la plateforme</h1><div class="note">${SB?"":"Données entièrement fictives (démonstration). "}Les économies potentielles reposent sur une hypothèse de −20 %. La baisse des pertes compare les 30 derniers jours aux 30 jours précédents ; ce n'est pas une économie de trésorerie prouvée.</div>
+ return`<h1>Vue d'ensemble de la plateforme</h1><div class="note">${SB?"":"Données entièrement fictives (démonstration). "}Les économies potentielles reposent sur une hypothèse de −20 %. La baisse des pertes compare les 30 derniers jours aux 30 jours précédents.</div>
  <div class="grid">${stat(R.length,"restaurants inscrits")}${stat(R.filter(r=>r.status==="Actif").length,"restaurants actifs")}${stat(db.requests.filter(q=>q.status==="En attente").length,"demandes d'accès en attente")}${stat(eur(c),"coût du gaspillage (30 jours)")}${stat(W30.length,"saisies (30 jours)")}${potStat(c)}${ecoStat(W)}</div>
  <div class="card"><h2>Évolution du coût du gaspillage (toute la plateforme)</h2>${evo(W)}</div><br>
  <div class="card"><h2>Détail par restaurant (30 jours)</h2><div class="tw"><table><thead><tr><th>Restaurant</th><th>Statut</th><th>Volume gaspillé</th><th>Coût</th><th>Économies potentielles</th><th>Baisse des pertes</th></tr></thead><tbody>`+
@@ -406,7 +406,7 @@ WIRE["admin.restaurants"]=()=>{
 /* ========= Responsable de restaurant ========= */
 PAGES.responsable.accueil=()=>{const W=mineW(),W30=last30(W),v=variation(W),c=sum(W30,w=>w.cost);
  const watch=db.products.filter(p=>p.restaurant===me.restaurant&&p.expiry&&-ago(p.expiry)<=5).sort((a,b)=>a.expiry.localeCompare(b.expiry));
- return`<h1>Tableau de bord – ${esc(rest(me.restaurant).name)}</h1><div class="note">${SB?"":"Données de démonstration fictives. "}La baisse des pertes compare les 30 derniers jours aux 30 jours précédents ; ce n'est pas une économie de trésorerie prouvée.</div>
+ return`<h1>Tableau de bord – ${esc(rest(me.restaurant).name)}</h1><div class="note">${SB?"":"Données de démonstration fictives. "}La baisse des pertes compare les 30 derniers jours aux 30 jours précédents.</div>
  <div class="grid">${stat(eur(c),"coût estimé du gaspillage (30 jours)")}${qtyStats(W30)}${stat(v,"évolution du coût, 7 derniers jours")}${stat(watch.length,"produits à écouler sous 5 jours")}${potStat(c)}${ecoStat(W)}</div>
  <div class="card"><h2>Actions rapides</h2><button class="btn" id="addw">Enregistrer un gaspillage</button> <button class="btn sec" id="goachats">Achats</button> <button class="btn sec" id="gocat">Gérer le catalogue</button></div><br>
  <div class="card"><h2>Produits à écouler en priorité</h2>${watch.length?`<div class="tw"><table><thead><tr><th>Produit</th><th>Stock</th><th>Péremption</th><th>Valeur en jeu</th></tr></thead><tbody>`+watch.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${stk(p)}</td><td>${expBadge(p.expiry)}</td><td>${typeof p.qty==="number"?eur(p.qty*p.price):"–"}</td></tr>`).join("")+"</tbody></table></div>":'<div class="empty">Aucun produit proche de la péremption.</div>'}</div><br>
@@ -494,10 +494,10 @@ WIRE["responsable.achats"]=()=>{
  document.querySelectorAll("[data-dela]").forEach(b=>b.onclick=()=>confirmBox("Supprimer cet achat","La ligne est retirée de l'historique ; le prix du catalogue n'est pas modifié.","Supprimer",()=>{db.purchases=db.purchases.filter(a=>a.id!==b.dataset.dela);save();route();toast("Achat supprimé.")}))};
 
 /* ========= Textes légaux (MODÈLES à faire relire avant tout usage réel) ========= */
-const CONSENT_VERSION="2026-10-19";
+const CONSENT_VERSION="2026-10-23";
 const V=k=>esc(LEGAL_INFO[k]||"");
 const UL=a=>"<ul>"+a.filter(Boolean).map(x=>"<li>"+x+"</li>").join("")+"</ul>";
-const MAJ="17 octobre 2026",MAJ_PRIV="19 octobre 2026";
+const MAJ="17 octobre 2026",MAJ_PRIV="23 octobre 2026";
 const LEGAL={
  mentions:["Mentions légales",()=>`<p style="color:var(--mute)">Dernière mise à jour : ${MAJ}</p>
  <p><b>Éditeur du site</b><br>AntiGaspiPro est édité par :<br>${V("editeur")}<br>${V("statut")}<br>${V("adresse")}<br>E-mail : ${V("email")}</p>
